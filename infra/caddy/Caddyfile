@@ -7,7 +7,9 @@
 	encode zstd gzip
 
 	header {
-		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		# HSTS: 1 year in production (docker-compose.prod.yml); 0 on localhost, where a pinned
+		# policy would stop browsers from accepting the local development certificate
+		Strict-Transport-Security "max-age={$HSTS_MAX_AGE:0}"
 		X-Content-Type-Options nosniff
 		X-Frame-Options DENY
 		Referrer-Policy no-referrer

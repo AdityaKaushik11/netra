@@ -151,6 +151,7 @@ services:
       SITE_ADDRESS: ${SITE_ADDRESS:-localhost}
       TLS_MODE: ${TLS_MODE:-internal}
       EXTERNAL_MEDIA_ORIGINS: ${EXTERNAL_MEDIA_ORIGINS:-https://test-streams.mux.dev}
+      HSTS_MAX_AGE: ${HSTS_MAX_AGE:-0}
     # Local-only by default; set BIND_ADDRESS=0.0.0.0 to serve other machines (e.g. a hosted demo)
     ports: ["${BIND_ADDRESS:-127.0.0.1}:${HTTPS_PORT:-8443}:443"]
     volumes: [caddy-data:/data]

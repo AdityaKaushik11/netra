@@ -31,6 +31,8 @@ services:
       - "8189:8189/tcp"
 
   web:
+    environment:
+      HSTS_MAX_AGE: "31536000"
     ports: !override
       - "80:80"     # Let's Encrypt HTTP challenge + redirect to HTTPS
       - "443:443"
