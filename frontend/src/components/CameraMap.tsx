@@ -1,9 +1,10 @@
 import L from "leaflet";
 import { useEffect, useMemo } from "react";
-import { MapContainer, Marker, Polyline, Popup, TileLayer, Tooltip, useMap } from "react-leaflet";
+import { MapContainer, Marker, Polyline, Popup, Tooltip, useMap } from "react-leaflet";
 import type { Camera, TraceStop, TrackPoint } from "../api/types";
 import { fmtTime } from "../lib/format";
 import { STATUS_COLOR, StatusBadge } from "./Badges";
+import { OsmTiles } from "./OsmTiles";
 
 const AHMEDABAD: [number, number] = [23.07, 72.57];
 
@@ -66,12 +67,7 @@ export function CameraMap({ cameras, route, tracks, onSelect, showLabels = true,
 
   return (
     <MapContainer center={AHMEDABAD} zoom={11} className={className ?? "h-full w-full"} zoomControl preferCanvas>
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        className="dark-tiles"
-        maxZoom={19}
-      />
+      <OsmTiles />
       <FitBounds points={fitPoints} />
       {cameras.map((c) => (
         <Marker

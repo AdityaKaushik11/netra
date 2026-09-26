@@ -1,9 +1,10 @@
 import L from "leaflet";
 import { useEffect } from "react";
-import { Circle, MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
+import { Circle, MapContainer, Marker, Polyline, Tooltip, useMap } from "react-leaflet";
 import type { TraceStop } from "../api/types";
 import type { MyLocation } from "../hooks/location";
 import { fmtTime } from "../lib/format";
+import { OsmTiles } from "./OsmTiles";
 
 export interface Target {
   lat: number;
@@ -49,12 +50,7 @@ export function ResponseMap({ target, me, sightings }: { target: Target; me: MyL
   const earlier = sightings.slice(0, -1);
   return (
     <MapContainer center={t} zoom={13} className="h-full w-full" preferCanvas>
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-        className="dark-tiles"
-        maxZoom={19}
-      />
+      <OsmTiles />
       {/* Frame the two things that matter: the operator and the wanted entity */}
       <Fit points={[t, m]} />
       {trail.length > 1 && (

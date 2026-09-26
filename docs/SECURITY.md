@@ -31,7 +31,7 @@ authenticated, and every important action is audited.
 |---|---|
 | TLS | Caddy terminates HTTPS (automatic Let's Encrypt with a real domain); HSTS. |
 | Content-Security-Policy | Console runs only its own scripts; external origins limited to map tiles and the configured HLS source. Fonts are bundled, so no third-party font requests. |
-| Other headers | `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: no-referrer`, COOP, restrictive `Permissions-Policy`. |
+| Other headers | `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy: no-referrer` (map tiles alone send the site's origin, which OpenStreetMap's usage policy requires; never a path or query), COOP, restrictive `Permissions-Policy`. |
 | Request limits | 2 MB API bodies, 64 KB WebRTC offers; validated schemas with length limits on every field. |
 | Internal endpoints | `/api/v1/internal/*` and `/api/metrics` are not routed by the edge proxy. |
 | Errors | Generic 500 responses; stack traces only in server logs. |
