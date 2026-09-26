@@ -1,0 +1,38 @@
+{
+  "cameras": [
+    {
+      "id": "C007",
+      "name": "Nehru Bridge East End",
+      "department_id": 1,
+      "zone": "Ahmedabad East",
+      "address": "Nehru Bridge, Ahmedabad",
+      "latitude": 23.024310,
+      "longitude": 72.580020,
+      "camera_type": "ANPR",
+      "source_protocol": "RTSP",
+      "stream_endpoint": "rtsp://camsim:8554/c002",
+      "stream_username": "viewer",
+      "stream_password": "replace-with-camsim-password",
+      "vendor": "Hikvision (simulated)",
+      "resolution": "1280x720",
+      "fps": 15,
+      "recording_enabled": true,
+      "storage_tier": "HOT",
+      "retention_days": 30
+    },
+    {
+      "id": "C008",
+      "name": "SG Highway Service Road (Vendor NVR ch2)",
+      "department_id": 1,
+      "zone": "Ahmedabad North",
+      "latitude": 23.061200,
+      "longitude": 72.530900,
+      "camera_type": "BULLET",
+      "source_protocol": "VENDOR_API",
+      "stream_endpoint": "http://simulator:8090/vendor/api/v1/channels/2",
+      "stream_password": "replace-with-vendor-api-key",
+      "storage_tier": "WARM",
+      "retention_days": 15
+    }
+  ]
+}

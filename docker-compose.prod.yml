@@ -1,0 +1,36 @@
+# Production overrides for a public server (e.g. an Oracle Cloud Always-Free VM):
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Required in .env: SITE_ADDRESS (a domain pointing at this server, e.g. 203-0-113-7.sslip.io),
+# TLS_MODE (an e-mail for Let's Encrypt), PUBLIC_IP (for WebRTC). See docs/DEPLOYMENT.md.
+
+x-prod-env: &prod-env
+  ENVIRONMENT: production
+  # Behind Vercel all browsers arrive via a few edge IPs; the per-account lockout still applies
+  RATE_LIMIT_LOGIN_PER_MIN: "60"
+  # Keep simulated traffic modest on a long-running public demo
+  CORS_ORIGINS: https://${SITE_ADDRESS}
+
+services:
+  backend:
+    environment:
+      <<: *prod-env
+    ports: !reset []   # only reachable through the HTTPS proxy
+
+  simulator:
+    environment:
+      SIM_EVENTS_PER_MIN: ${SIM_EVENTS_PER_MIN:-10}
+
+  gateway:
+    environment:
+      # Advertise the server's public address in WebRTC ICE candidates
+      MTX_WEBRTCADDITIONALHOSTS: ${PUBLIC_IP}
+    ports: !override
+      - "8189:8189/udp"
+      - "8189:8189/tcp"
+
+  web:
+    ports: !override
+      - "80:80"     # Let's Encrypt HTTP challenge + redirect to HTTPS
+      - "443:443"

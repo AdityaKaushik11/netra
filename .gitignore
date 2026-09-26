@@ -1,0 +1,27 @@
+# secrets
+.env
+*.pem
+*.key
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.db
+
+# node
+node_modules/
+dist/
+
+# media
+samples/*.mp4
+
+# os / editor
+.DS_Store
+.idea/
+.vscode/
+
+# personal submission notes (not for the repo)
+*.local.md

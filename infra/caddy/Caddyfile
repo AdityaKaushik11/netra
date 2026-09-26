@@ -1,0 +1,55 @@
+{
+	admin off
+}
+
+{$SITE_ADDRESS:localhost} {
+	tls {$TLS_MODE:internal}
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy no-referrer
+		Cross-Origin-Opener-Policy same-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=(self), payment=(), usb=()"
+		-Server
+	}
+
+	handle /api/* {
+		# Internal-only endpoints are never routed from outside
+		@internal path /api/v1/internal/* /api/metrics
+		respond @internal 404
+		# Largest legitimate body is a 500-event batch (~250 KB)
+		request_body {
+			max_size 2MB
+		}
+		reverse_proxy backend:8000
+	}
+	handle_path /media/* {
+		reverse_proxy gateway:8888 {
+			# the gateway redirects to root-relative URLs; keep them under /media
+			header_down Location "^/" "/media/"
+		}
+	}
+	handle_path /playback/* {
+		reverse_proxy gateway:9996
+	}
+	handle_path /webrtc/* {
+		request_body {
+			max_size 64KB
+		}
+		reverse_proxy gateway:8889 {
+			header_down Location "^/" "/webrtc/"
+		}
+	}
+	handle {
+		# Strict CSP for the console: only our own scripts run; external origins are limited to
+		# map tiles and the configured external HLS source(s). (Swagger UI under /api/docs keeps
+		# FastAPI's defaults because it loads its assets from a CDN.)
+		header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://tile.openstreetmap.org; media-src 'self' blob: {$EXTERNAL_MEDIA_ORIGINS:https://test-streams.mux.dev}; connect-src 'self' {$EXTERNAL_MEDIA_ORIGINS:https://test-streams.mux.dev}; worker-src 'self' blob:; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

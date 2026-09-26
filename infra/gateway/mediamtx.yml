@@ -1,0 +1,43 @@
+# Central video gateway: pulls camera RTSP on the private network, serves LL-HLS / WebRTC.
+# Paths are registered dynamically by the Netra backend through the control API.
+logLevel: info
+api: yes
+apiAddress: :9997
+metrics: yes
+metricsAddress: :9998
+rtspAddress: :8554
+rtmp: no
+srt: no
+hls: yes
+hlsAddress: :8888
+hlsAlwaysRemux: yes
+hlsVariant: lowLatency
+hlsSegmentCount: 7
+hlsSegmentDuration: 1s
+hlsPartDuration: 200ms
+webrtc: yes
+webrtcAddress: :8889
+webrtcLocalUDPAddress: :8189
+webrtcLocalTCPAddress: :8189
+webrtcAdditionalHosts: [127.0.0.1]
+# Recorded footage is served by the playback server (MP4 clips by time range)
+playback: yes
+playbackAddress: :9996
+# Every request is authorised by the backend: viewers need a short-lived camera-scoped stream
+# token, and the control API needs the backend's own secret (GATEWAY_API_SECRET), so no other
+# container on the network can reconfigure streams. Metrics (read-only counters) stay open on
+# the internal network for Prometheus.
+authMethod: http
+authHTTPAddress: http://backend:8000/api/v1/internal/media-auth
+authHTTPExclude:
+  - action: metrics
+pathDefaults:
+  rtspTransport: tcp
+  # Hot-tier recording at the gateway; enabled per camera by the backend (recording_enabled)
+  record: no
+  recordPath: /recordings/%path/%Y-%m-%d_%H-%M-%S-%f
+  recordFormat: fmp4
+  recordPartDuration: 1s
+  recordSegmentDuration: 60s
+  recordDeleteAfter: 6h
+paths: {}
