@@ -1,0 +1,1014 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Netra — System Architecture</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 18mm 15mm; }
+  @page wide { size: A4 landscape; margin: 12mm 14mm 15mm 14mm; }
+  .wide { page: wide; }
+  .wide .figure svg { max-height: 138mm; }
+  .wide .fig-title { font-size: 12pt; font-weight: 700; color: var(--navy); margin-bottom: 2mm; }
+  :root {
+    --ink: #0f172a; --ink2: #334155; --muted: #64748b; --line: #cbd5e1; --soft: #f1f5f9;
+    --navy: #0f2742; --cyan: #0e7490; --cyan-l: #ecfeff;
+    --video: #ea580c; --data: #2563eb; --event: #16a34a; --ctrl: #64748b; --alert: #dc2626;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif; color: var(--ink);
+         font-size: 10pt; line-height: 1.42; margin: 0; }
+  h1 { font-size: 20pt; margin: 0 0 4mm; color: var(--navy); letter-spacing: -0.01em; }
+  h2 { font-size: 14.5pt; color: var(--navy); margin: 0 0 3mm; padding-bottom: 1.5mm; border-bottom: 2px solid var(--cyan); }
+  h2 .num { color: var(--cyan); margin-right: 2mm; }
+  h3 { font-size: 11pt; color: var(--navy); margin: 4mm 0 1.5mm; }
+  p { margin: 0 0 2.2mm; }
+  .section { page-break-before: always; }
+  .lead { color: var(--ink2); font-size: 10.5pt; }
+  .small { font-size: 8.8pt; color: var(--muted); }
+  code, .mono { font-family: "SF Mono", Menlo, Consolas, monospace; font-size: 8.6pt; }
+  code { background: var(--soft); padding: 0 1.2mm; border-radius: 2px; }
+  table { width: 100%; border-collapse: collapse; margin: 2mm 0 3mm; font-size: 8.9pt; }
+  tr { break-inside: avoid; page-break-inside: avoid; }
+  h2, h3 { break-after: avoid; page-break-after: avoid; }
+  th { background: var(--navy); color: #fff; text-align: left; font-weight: 600; padding: 1.6mm 2mm; }
+  td { padding: 1.4mm 2mm; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:nth-child(even) td { background: #f8fafc; }
+  td.k { font-weight: 600; color: var(--navy); white-space: nowrap; }
+  .figure { margin: 2mm 0 3mm; page-break-inside: avoid; }
+  .figure svg { width: 100%; height: auto; display: block; }
+  .caption { font-size: 8.6pt; color: var(--muted); margin-top: 1.5mm; text-align: center; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4mm; }
+  .card { border: 1px solid var(--line); border-radius: 2mm; padding: 3mm; page-break-inside: avoid; }
+  .card h3 { margin-top: 0; }
+  ul { margin: 0 0 2mm 0; padding-left: 5mm; }
+  li { margin-bottom: 0.8mm; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 3mm; margin: 3mm 0 4mm; }
+  .kpi { border: 1px solid var(--line); border-top: 3px solid var(--cyan); border-radius: 1.5mm; padding: 2.5mm; }
+  .kpi b { display: block; font-size: 15pt; color: var(--navy); }
+  .kpi span { font-size: 8.4pt; color: var(--muted); }
+  .tag { display: inline-block; font-size: 7.8pt; font-weight: 600; padding: 0.3mm 1.6mm; border-radius: 1mm;
+         background: var(--cyan-l); color: var(--cyan); border: 1px solid #a5f3fc; }
+  .ok { color: var(--event); font-weight: 700; }
+
+  /* cover */
+  .cover { height: 255mm; display: flex; flex-direction: column; }
+  .cover .band { background: var(--navy); color: #fff; padding: 16mm 12mm 12mm; border-radius: 3mm; }
+  .cover .band .eyebrow { color: #67e8f9; font-size: 9pt; letter-spacing: 0.18em; font-weight: 700; }
+  .cover .band h1 { color: #fff; font-size: 30pt; margin: 3mm 0 2mm; }
+  .cover .band .sub { color: #cbd5e1; font-size: 12pt; max-width: 150mm; }
+  .cover .meta { margin-top: 10mm; display: grid; grid-template-columns: 38mm 1fr; row-gap: 2mm; font-size: 10pt; }
+  .cover .meta div:nth-child(odd) { color: var(--muted); }
+  .cover .foot { margin-top: auto; font-size: 8.6pt; color: var(--muted); border-top: 1px solid var(--line); padding-top: 3mm; }
+  .toc { columns: 2; column-gap: 8mm; font-size: 9.6pt; margin-top: 8mm; }
+  .toc div { break-inside: avoid; padding: 0.8mm 0; border-bottom: 1px dotted var(--line); }
+  .toc b { color: var(--cyan); display: inline-block; width: 7mm; }
+
+  /* svg text classes */
+  svg text { font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif; }
+  .t-title { font-size: 12.5px; font-weight: 700; fill: var(--navy); }
+  .t-sub { font-size: 10px; fill: #475569; }
+  .t-tiny { font-size: 9.5px; fill: #475569; }
+  .t-lbl { font-size: 9.5px; fill: #334155; font-weight: 600; }
+  .t-group { font-size: 10px; font-weight: 800; letter-spacing: 0.12em; fill: var(--cyan); }
+  .t-white { fill: #fff; }
+  .b { fill: #fff; stroke: #94a3b8; stroke-width: 1.2; }
+  .b-navy { fill: var(--navy); stroke: var(--navy); }
+  .b-soft { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1; }
+  .b-cyan { fill: var(--cyan-l); stroke: #67e8f9; stroke-width: 1.2; }
+  .b-video { fill: #fff7ed; stroke: #fdba74; stroke-width: 1.2; }
+  .b-data { fill: #eff6ff; stroke: #93c5fd; stroke-width: 1.2; }
+  .b-event { fill: #f0fdf4; stroke: #86efac; stroke-width: 1.2; }
+  .frame { fill: none; stroke: #94a3b8; stroke-dasharray: 5 4; stroke-width: 1.2; }
+  .a-video { stroke: var(--video); stroke-width: 2; fill: none; }
+  .a-data { stroke: var(--data); stroke-width: 2; fill: none; }
+  .a-event { stroke: var(--event); stroke-width: 2; fill: none; }
+  .a-ctrl { stroke: var(--ctrl); stroke-width: 1.6; fill: none; stroke-dasharray: 5 3; }
+  .a-alert { stroke: var(--alert); stroke-width: 2; fill: none; }
+  .life { stroke: #94a3b8; stroke-dasharray: 4 4; stroke-width: 1.2; }
+</style>
+</head>
+<body>
+
+<!-- ============================== COVER ============================== -->
+<div class="cover">
+  <div class="band">
+    <div class="eyebrow">SYSTEM ARCHITECTURE · FULL STACK DEVELOPER CHALLENGE</div>
+    <h1>Netra</h1>
+    <div class="sub">Integrated CCTV Monitoring, Video Analytics and Real-Time Alert Platform —
+      heterogeneous camera integration, AI event correlation, watchlist alerting, GIS movement
+      tracing and a credible path to ~80,000 cameras.</div>
+  </div>
+  <div class="meta">
+    <div>Prepared for</div><div><b>okDriver Smart Dashcams Private Limited</b></div>
+    <div>Candidate</div><div><b>Aditya Kaushik</b> · Full Stack Developer (Intern)</div>
+    <div>Source code</div><div class="mono">github.com/AdityaKaushik11/netra</div>
+    <div>Aligned with</div><div>Gujarat Police Innovation Hackathon 2026 problem statement</div>
+    <div>Document date</div><div>27 September 2026 · version 1.0</div>
+  </div>
+  <div class="toc">
+    <div><b>1</b>Executive summary</div>
+    <div><b>2</b>Requirement coverage</div>
+    <div><b>3</b>System architecture</div>
+    <div><b>4</b>Components &amp; responsibilities</div>
+    <div><b>5</b>Deployment &amp; network topology</div>
+    <div><b>6</b>Camera integration &amp; video path</div>
+    <div><b>7</b>AI event ingestion pipeline</div>
+    <div><b>8</b>Watchlist correlation &amp; alerting</div>
+    <div><b>9</b>Real-time architecture</div>
+    <div><b>10</b>Data model</div>
+    <div><b>11</b>API design</div>
+    <div><b>12</b>Security architecture</div>
+    <div><b>13</b>Reliability &amp; operations</div>
+    <div><b>14</b>Scalability to 80,000 cameras</div>
+    <div><b>15</b>Technology, cost &amp; roadmap</div>
+  </div>
+  <div class="foot">All figures in this document describe the working prototype in the repository; capacity and cost
+    figures in section 14 are planning estimates with stated assumptions.</div>
+</div>
+
+<!-- ============================== 1. SUMMARY ============================== -->
+<div class="section">
+  <h2><span class="num">1</span>Executive summary</h2>
+  <p class="lead">Netra is a working prototype of a centralised video-intelligence platform. Cameras of different
+    types and vendors are onboarded into one registry, monitored continuously, viewed through one console,
+    enriched with AI inference results, correlated against a watchlist and turned into real-time alerts that an
+    operator can act on — including the vehicle's movement history on a map.</p>
+
+  <div class="kpis">
+    <div class="kpi"><b>5</b><span>logically different camera source types behind one adapter interface</span></div>
+    <div class="kpi"><b>&lt; 1 s</b><span>detection → alert on every operator screen (WebSocket push)</span></div>
+    <div class="kpi"><b>38</b><span>automated tests incl. security, dedup, correlation, retention</span></div>
+    <div class="kpi"><b>₹0</b><span>entirely free, open-source software; 0 known dependency vulnerabilities</span></div>
+  </div>
+
+  <h3>Design principles</h3>
+  <table>
+    <tr><th style="width:28%">Principle</th><th>How it shows up in the architecture</th></tr>
+    <tr><td class="k">Adapters, not special cases</td><td>RTSP, ONVIF, HLS, vendor REST APIs and dashcams implement one interface
+      (<code>prepare · probe · playback · teardown</code>). Adding a vendor SDK is one class; nothing else changes.</td></tr>
+    <tr><td class="k">Move metadata, not pixels</td><td>Analytics run at the edge and send ~0.6 KB events; video is pulled through a
+      gateway only when someone watches it. This is what makes 80,000 cameras affordable.</td></tr>
+    <tr><td class="k">Stateless, horizontally scalable API</td><td>Real-time fan-out goes through Redis Pub/Sub, so any API replica can serve any
+      WebSocket; background work (health probing) is leader-elected so it does not multiply with replicas.</td></tr>
+    <tr><td class="k">Exactly-once semantics where it matters</td><td>Idempotency keys, a temporal de-duplication window and alert cool-down stop
+      retries, repeated ANPR reads and alert storms from creating duplicate records or operator noise.</td></tr>
+    <tr><td class="k">Secure by default</td><td>Every request authenticated; camera credentials encrypted and never sent to browsers; video
+      access through short-lived, camera-scoped tokens; SSRF guard; strict CSP; services bound to localhost unless
+      deliberately exposed; everything audited.</td></tr>
+    <tr><td class="k">Operable for months unattended</td><td>Health checks, restart policies, memory limits, bounded logs, data retention,
+      nightly backups and automatic certificate renewal are part of the design, not an afterthought.</td></tr>
+  </table>
+
+  <h3>End-to-end flow (brief §11) — all steps implemented and verified</h3>
+  <table>
+    <tr><th style="width:5%">#</th><th style="width:40%">Step</th><th>Where it happens</th></tr>
+    <tr><td>1</td><td>Admin adds two or more camera sources</td><td>Console form, bulk API (<code>POST /cameras/bulk</code>, API key) or ONVIF discovery</td></tr>
+    <tr><td>2</td><td>Metadata appears in registry and map</td><td>Registry page + Leaflet map; pushed live via <code>camera.created</code></td></tr>
+    <tr><td>3</td><td>Camera status is monitored</td><td>Health monitor: gateway readiness &amp; bitrate, manifest probes, vendor status API, edge heartbeats</td></tr>
+    <tr><td>4</td><td>A live or recorded feed is viewable</td><td>LL-HLS / WebRTC via gateway, direct HLS, vendor snapshots; MP4 replay of any recorded window</td></tr>
+    <tr><td>5–6</td><td>Analytics produces an event; backend validates &amp; stores it</td><td>REST, batch or Redis Stream → ingestion pipeline → MySQL</td></tr>
+    <tr><td>7–8</td><td>Event checked against watchlist; match raises a real-time alert</td><td>In-memory exact + fuzzy index → alert → WebSocket toast, sound, map pulse</td></tr>
+    <tr><td>9</td><td>Operator searches the entity and sees movement history</td><td>Trace page: chronological stops, distances, speeds, route map, cloned-plate anomaly</td></tr>
+    <tr><td>10</td><td>Auditable history of events and alerts</td><td>Append-only <code>audit_logs</code> + persisted events/alerts, searchable and exportable (CSV)</td></tr>
+  </table>
+</div>
+
+<!-- ============================== 2. COVERAGE ============================== -->
+<div class="section">
+  <h2><span class="num">2</span>Requirement coverage</h2>
+  <p class="lead">Every section of the brief mapped to the component that implements it.</p>
+  <table>
+    <tr><th style="width:21%">Brief section</th><th>Implementation</th></tr>
+    <tr><td class="k">§3 Camera registry</td><td>Add / edit / disable / search / filter; ID, name, department, lat/long, type, protocol, endpoint reference,
+      status, last heartbeat, zone, storage tier / location / retention; manual, API and ONVIF-discovery onboarding;
+      Online / Degraded / Offline health; per-camera audit history; interactive map.</td></tr>
+    <tr><td class="k">§4 Live video</td><td>RTSP cameras (authenticated) relayed by a MediaMTX gateway; ONVIF Profile S device (SOAP + WS-Security
+      digest); existing HLS publisher; vendor NVR REST API; vehicle dashcam over 4G with GPS. LL-HLS, WebRTC (WHEP) and
+      recorded MP4 playback.</td></tr>
+    <tr><td class="k">§5 Dashboard</td><td>KPI strip (online/degraded/offline, open alerts by severity, detections, ingest rate, watchlist size, duplicates
+      suppressed), live map, alert queue, live camera grid, streaming detections, hourly trend, camera &amp; service health,
+      camera filter, global entity search.</td></tr>
+    <tr><td class="k">§6 GIS &amp; movement</td><td>Status-coloured markers that pulse on open alerts; moving dashcam marker with GPS trail; trace page with numbered
+      chronological route, leg distance / time / implied speed and impossible-travel detection; alert response map
+      showing the operator and the wanted vehicle.</td></tr>
+    <tr><td class="k">§7 AI analytics</td><td>ANPR, vehicle, person, face-recognition, object and dashcam ADAS events (overspeed, harsh braking, collision
+      warning, drowsiness); schema + semantic validation; persistence; correlation; real-time dashboard updates.</td></tr>
+    <tr><td class="k">§8 Watchlist &amp; alerts</td><td>Synthetic watchlist (vehicles and persons); exact and OCR-tolerant fuzzy matching; alerts store timestamp,
+      camera, location, entity, confidence, status; acknowledge / resolve / false-positive, individually or in bulk;
+      alert view shows live feed and a recorded evidence clip.</td></tr>
+    <tr><td class="k">§9 Real-time</td><td>WebSocket over Redis Pub/Sub; Redis Streams consumer group as a message channel; persisted events; idempotency,
+      temporal dedup and alert cool-down against duplicate or uncontrolled events.</td></tr>
+    <tr><td class="k">§10 Stack</td><td>FastAPI / Python, MySQL 8 (RDS-compatible), Redis, WebSocket, WebRTC, React + TypeScript, Leaflet, Docker
+      Compose, OpenAPI / Swagger.</td></tr>
+    <tr><td class="k">§12 Scalability</td><td>Edge / regional / central design, horizontal scaling, bandwidth, indexing &amp; partitioning, queues, GPU sizing,
+      hot / warm / cold storage, monitoring, HA / DR, segmentation, cost estimate (section 14).</td></tr>
+    <tr><td class="k">§13 Security</td><td>JWT + RBAC, server-side logout, account lockout, hashed scoped API keys, encrypted stream credentials,
+      camera-scoped stream tokens, SSRF guard, CSP, HTTPS, rate limiting, audit log, env-based secrets (section 12).</td></tr>
+    <tr><td class="k">§14 Deliverables</td><td>Repository, README, this architecture document, ER diagram, API documentation (Swagger + docs/API.md),
+      representative feeds and watchlist, deployment and scalability notes, demo script.</td></tr>
+    <tr><td class="k">§18 Optional</td><td>ONVIF mock &amp; discovery · RTSP→HLS/WebRTC gateway · ANPR duplicate suppression · temporal correlation ·
+      heartbeat service · role-based views · route reconstruction · low-bandwidth snapshot mode · Docker Compose ·
+      tests &amp; CI · Prometheus metrics · Redis event architecture · multi-department registry.</td></tr>
+  </table>
+</div>
+
+<!-- ============================== 3. SYSTEM ARCHITECTURE ============================== -->
+<div class="section">
+  <div class="wide">
+  <h2><span class="num">3</span>System architecture</h2>
+  <p class="lead">Sources on the left, the platform in the middle, operators on the right. Video, API/data, events and control
+    traffic travel on separate, explicitly authorised paths.</p>
+  <div class="figure">
+  <svg viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="mv" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#ea580c"/></marker>
+      <marker id="md" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/></marker>
+      <marker id="me" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker>
+      <marker id="mc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+    </defs>
+
+    <!-- LEFT: sources -->
+    <text x="10" y="38" class="t-group">CAMERA SOURCES</text>
+    <rect x="10" y="48" width="200" height="48" rx="6" class="b-video"/>
+    <text x="20" y="67" class="t-title">IP cameras · RTSP</text><text x="20" y="84" class="t-sub">C001 C002 C006 · authenticated</text>
+    <rect x="10" y="104" width="200" height="48" rx="6" class="b-video"/>
+    <text x="20" y="123" class="t-title">okDriver dashcam</text><text x="20" y="140" class="t-sub">D001 · RTSP over 4G + GPS</text>
+    <rect x="10" y="160" width="200" height="48" rx="6" class="b-video"/>
+    <text x="20" y="179" class="t-title">ONVIF PTZ camera</text><text x="20" y="196" class="t-sub">C003 · SOAP via adapter → RTSP</text>
+    <rect x="10" y="228" width="200" height="48" rx="6" class="b"/>
+    <text x="20" y="247" class="t-title">Existing VMS · HLS</text><text x="20" y="264" class="t-sub">C004 · direct manifest</text>
+    <rect x="10" y="284" width="200" height="48" rx="6" class="b"/>
+    <text x="20" y="303" class="t-title">Vendor NVR · REST API</text><text x="20" y="320" class="t-sub">C005 · status + snapshots</text>
+
+    <text x="10" y="362" class="t-group">EDGE &amp; ANALYTICS</text>
+    <rect x="10" y="372" width="200" height="48" rx="6" class="b-event"/>
+    <text x="20" y="391" class="t-title">AI inference engine</text><text x="20" y="408" class="t-sub">ANPR · face · object · ADAS</text>
+    <rect x="10" y="428" width="200" height="48" rx="6" class="b-event"/>
+    <text x="20" y="447" class="t-title">Edge agents</text><text x="20" y="464" class="t-sub">heartbeats · GPS telemetry</text>
+
+    <!-- MIDDLE frame -->
+    <rect x="236" y="22" width="518" height="470" rx="10" class="frame"/>
+    <text x="250" y="40" class="t-group">NETRA PLATFORM · DOCKER COMPOSE</text>
+
+    <!-- Gateway -->
+    <rect x="250" y="50" width="490" height="155" rx="8" class="b-video"/>
+    <text x="264" y="72" class="t-title">Video gateway — MediaMTX</text>
+    <text x="264" y="88" class="t-sub">pulls cameras on the private camera network; every viewer authorised by the API</text>
+    <g>
+      <rect x="264" y="100" width="110" height="44" rx="5" class="b"/><text x="319" y="119" text-anchor="middle" class="t-lbl">RTSP pull</text><text x="319" y="134" text-anchor="middle" class="t-tiny">creds server-side</text>
+      <rect x="382" y="100" width="110" height="44" rx="5" class="b"/><text x="437" y="119" text-anchor="middle" class="t-lbl">LL-HLS</text><text x="437" y="134" text-anchor="middle" class="t-tiny">200 ms parts</text>
+      <rect x="500" y="100" width="110" height="44" rx="5" class="b"/><text x="555" y="119" text-anchor="middle" class="t-lbl">WebRTC (WHEP)</text><text x="555" y="134" text-anchor="middle" class="t-tiny">sub-second live view</text>
+      <rect x="618" y="100" width="110" height="44" rx="5" class="b"/><text x="673" y="119" text-anchor="middle" class="t-lbl">Recording</text><text x="673" y="134" text-anchor="middle" class="t-tiny">6 h · MP4 replay</text>
+    </g>
+    <text x="264" y="170" class="t-tiny">Control API (path registration) requires the backend's secret · auth hook: /api/v1/internal/media-auth</text>
+    <text x="264" y="186" class="t-tiny">Ports (internal): 8554 RTSP · 8888 HLS · 8889 WebRTC · 9996 playback · 9997 control · 9998 metrics</text>
+
+    <!-- API -->
+    <rect x="250" y="235" width="310" height="245" rx="8" class="b-data"/>
+    <text x="264" y="257" class="t-title">API — FastAPI (stateless replicas)</text>
+    <g>
+      <rect x="262" y="268" width="140" height="40" rx="5" class="b"/><text x="332" y="285" text-anchor="middle" class="t-lbl">Source adapters</text><text x="332" y="299" text-anchor="middle" class="t-tiny">RTSP·ONVIF·HLS·Vendor</text>
+      <rect x="410" y="268" width="140" height="40" rx="5" class="b"/><text x="480" y="285" text-anchor="middle" class="t-lbl">Ingestion pipeline</text><text x="480" y="299" text-anchor="middle" class="t-tiny">validate·dedup·store</text>
+      <rect x="262" y="316" width="140" height="40" rx="5" class="b"/><text x="332" y="333" text-anchor="middle" class="t-lbl">Watchlist matcher</text><text x="332" y="347" text-anchor="middle" class="t-tiny">exact + fuzzy index</text>
+      <rect x="410" y="316" width="140" height="40" rx="5" class="b"/><text x="480" y="333" text-anchor="middle" class="t-lbl">Alerts · trace · search</text><text x="480" y="347" text-anchor="middle" class="t-tiny">workflow · GIS</text>
+      <rect x="262" y="364" width="140" height="40" rx="5" class="b"/><text x="332" y="381" text-anchor="middle" class="t-lbl">Health monitor</text><text x="332" y="395" text-anchor="middle" class="t-tiny">leader-elected · 10 s</text>
+      <rect x="410" y="364" width="140" height="40" rx="5" class="b"/><text x="480" y="381" text-anchor="middle" class="t-lbl">Auth · RBAC · audit</text><text x="480" y="395" text-anchor="middle" class="t-tiny">JWT · API keys</text>
+      <rect x="262" y="412" width="140" height="40" rx="5" class="b"/><text x="332" y="429" text-anchor="middle" class="t-lbl">WebSocket hub</text><text x="332" y="443" text-anchor="middle" class="t-tiny">Redis fan-out</text>
+      <rect x="410" y="412" width="140" height="40" rx="5" class="b"/><text x="480" y="429" text-anchor="middle" class="t-lbl">Stream consumer</text><text x="480" y="443" text-anchor="middle" class="t-tiny">Redis consumer group</text>
+    </g>
+    <text x="264" y="472" class="t-tiny">OpenAPI / Swagger · Prometheus metrics · retention jobs</text>
+
+    <!-- Data -->
+    <rect x="580" y="235" width="160" height="110" rx="8" class="b"/>
+    <text x="592" y="257" class="t-title">Redis 7</text>
+    <text x="592" y="276" class="t-sub">Pub/Sub (real-time)</text><text x="592" y="291" class="t-sub">Streams (event ingest)</text>
+    <text x="592" y="306" class="t-sub">dedup windows · rate limits</text><text x="592" y="321" class="t-sub">sessions · leader lock</text>
+    <rect x="580" y="360" width="160" height="120" rx="8" class="b"/>
+    <text x="592" y="382" class="t-title">MySQL 8</text>
+    <text x="592" y="400" class="t-sub">RDS / Aurora compatible</text><text x="592" y="416" class="t-sub">cameras · events · alerts</text>
+    <text x="592" y="432" class="t-sub">watchlist · users · audit</text><text x="592" y="448" class="t-sub">GPS tracks · API clients</text>
+    <text x="592" y="466" class="t-tiny">Alembic migrations</text>
+
+    <!-- Caddy bar -->
+    <rect x="772" y="50" width="56" height="430" rx="8" class="b-navy"/>
+    <text transform="translate(806,265) rotate(-90)" text-anchor="middle" class="t-title t-white">EDGE PROXY · CADDY</text>
+    <text transform="translate(822,265) rotate(-90)" text-anchor="middle" class="t-tiny t-white" style="fill:#cbd5e1">TLS · HSTS · CSP · routes /api /media /webrtc /playback</text>
+
+    <!-- Right column -->
+    <text x="858" y="38" class="t-group">OPERATORS</text>
+    <rect x="858" y="48" width="134" height="250" rx="8" class="b-cyan"/>
+    <text x="868" y="68" class="t-title">Console (React)</text>
+    <text x="868" y="84" class="t-tiny">in the operator's browser</text>
+    <g class="t-sub">
+      <text x="868" y="108">• Dashboard &amp; KPIs</text><text x="868" y="126">• GIS map &amp; dashcam</text>
+      <text x="868" y="144">• Live wall · replay</text><text x="868" y="162">• Alerts &amp; response</text>
+      <text x="868" y="180">• Trace &amp; search</text><text x="868" y="198">• Registry · watchlist</text>
+      <text x="868" y="216">• Audit · API clients</text>
+    </g>
+    <text x="868" y="244" class="t-tiny">hls.js · WebRTC · Leaflet</text>
+    <text x="868" y="258" class="t-tiny">WebSocket live updates</text>
+    <rect x="858" y="318" width="134" height="72" rx="8" class="b"/>
+    <text x="868" y="338" class="t-title">Vercel (optional)</text>
+    <text x="868" y="355" class="t-tiny">static console + HTTP</text><text x="868" y="368" class="t-tiny">rewrites to the proxy</text>
+    <rect x="858" y="410" width="134" height="70" rx="8" class="b-soft"/>
+    <text x="868" y="430" class="t-title">Observability</text>
+    <text x="868" y="447" class="t-tiny">Prometheus /metrics</text><text x="868" y="460" class="t-tiny">/api/health · /api/ready</text><text x="868" y="473" class="t-tiny">JSON logs · audit trail</text>
+
+    <!-- ARROWS -->
+    <path d="M210,72 H250" class="a-video" marker-end="url(#mv)"/>
+    <path d="M210,128 H250" class="a-video" marker-end="url(#mv)"/>
+    <path d="M210,184 H250" class="a-video" marker-end="url(#mv)"/>
+
+    <path d="M210,252 H250" class="a-ctrl" marker-end="url(#mc)"/>
+    <path d="M210,308 H250" class="a-ctrl" marker-end="url(#mc)"/>
+
+    <path d="M210,396 H250" class="a-event" marker-end="url(#me)"/>
+    <path d="M210,452 H250" class="a-event" marker-end="url(#me)"/>
+
+    <path d="M332,205 V235" class="a-ctrl" marker-start="url(#mc)" marker-end="url(#mc)"/>
+    <text x="340" y="224" class="t-tiny">auth hook · control API</text>
+
+    <path d="M560,290 H580" class="a-data" marker-start="url(#md)" marker-end="url(#md)"/>
+    <path d="M560,420 H580" class="a-data" marker-start="url(#md)" marker-end="url(#md)"/>
+
+    <path d="M740,128 H772" class="a-video" marker-end="url(#mv)"/>
+    <path d="M560,258 H570 V222 H760 V240 H772" class="a-data" marker-start="url(#md)" marker-end="url(#md)"/>
+
+    <path d="M828,160 H858" class="a-data" marker-start="url(#md)" marker-end="url(#md)"/>
+    <path d="M828,235 H858" class="a-video" marker-end="url(#mv)"/>
+    <path d="M858,354 H828" class="a-data" marker-end="url(#md)"/>
+    <path d="M925,318 V298" class="a-data" marker-end="url(#md)"/>
+
+    <!-- Legend -->
+    <g transform="translate(10,530)">
+      <path d="M0,8 H34" class="a-video" marker-end="url(#mv)"/><text x="42" y="12" class="t-sub">Video (RTSP / LL-HLS / WebRTC / MP4)</text>
+      <path d="M250,8 H284" class="a-data" marker-end="url(#md)"/><text x="292" y="12" class="t-sub">API, WebSocket and data</text>
+      <path d="M450,8 H484" class="a-event" marker-end="url(#me)"/><text x="492" y="12" class="t-sub">AI events &amp; telemetry</text>
+      <path d="M640,8 H674" class="a-ctrl" marker-end="url(#mc)"/><text x="682" y="12" class="t-sub">Probes, control &amp; authorisation</text>
+      <text x="0" y="40" class="t-tiny">In the prototype the cameras, ONVIF device, vendor NVR, AI engine, edge agent and dashcam are simulators that speak the real protocols;
+        any real RTSP / ONVIF / HLS source is onboarded the same way.</text>
+    </g>
+  </svg>
+  <div class="caption">Figure 1 — System architecture</div>
+  </div>
+  <p class="small">Caddy is the only component exposed to users. The API port and all data stores are internal; the video gateway's
+    control API and viewer access are both authorised by the backend, so no other container or browser can reconfigure or read
+    streams without permission.</p>
+  </div>
+</div>
+
+<!-- ============================== 4. COMPONENTS ============================== -->
+<div class="section">
+  <h2><span class="num">4</span>Components &amp; responsibilities</h2>
+  <table>
+    <tr><th style="width:21%">Component</th><th style="width:47%">Responsibility</th><th>Key design decisions</th></tr>
+    <tr><td class="k">Source adapters</td><td>One interface (<code>prepare</code>, <code>probe</code>, <code>playback</code>, <code>teardown</code>)
+      for RTSP, ONVIF, HLS and vendor REST sources; register streams with the gateway; resolve ONVIF stream URIs.</td>
+      <td>New vendor = one class. Credentials decrypted only at the moment of use.</td></tr>
+    <tr><td class="k">Video gateway</td><td>Pull camera RTSP on the camera network; serve LL-HLS and WebRTC; record fMP4; serve MP4
+      clips by time range.</td><td>Viewer auth delegated to the API; on-demand pull available for bandwidth saving.</td></tr>
+    <tr><td class="k">Ingestion pipeline</td><td>Validate, de-duplicate, persist and correlate analytics events; raise or update alerts;
+      publish after commit.</td><td>Same code path for REST, batch and Redis Stream input.</td></tr>
+    <tr><td class="k">Watchlist matcher</td><td>Exact and edit-distance-1 matching of plates and person references.</td>
+      <td>In-memory index; SymSpell deletion index gives O(length) fuzzy lookups; versioned in Redis.</td></tr>
+    <tr><td class="k">Health monitor</td><td>Probe every enabled camera every 10 s or evaluate edge heartbeats; persist, audit and push
+      status changes; run data-retention jobs.</td><td>Leader lock in Redis; two-failure hysteresis; heartbeat + video combined.</td></tr>
+    <tr><td class="k">Real-time hub</td><td>Deliver <code>detection.created</code>, <code>alert.*</code>, <code>camera.*</code>,
+      <code>watchlist.changed</code> to every console.</td><td>Redis Pub/Sub fan-out: no sticky sessions required.</td></tr>
+    <tr><td class="k">Stream consumer</td><td>Consume the <code>netra:ingest:detections</code> Redis Stream.</td>
+      <td>Consumer group, ACK after commit, dead-letter stream, reclaim of stale messages.</td></tr>
+    <tr><td class="k">Auth &amp; audit</td><td>JWT sessions, RBAC, API keys, lockout, revocation; append-only audit log.</td>
+      <td>See section 12.</td></tr>
+    <tr><td class="k">Edge proxy (Caddy)</td><td>TLS termination, security headers, routing to API and gateway, blocking internal paths,
+      request-size limits.</td><td>Automatic Let's Encrypt in production.</td></tr>
+    <tr><td class="k">Console (React)</td><td>Dashboard, map, live wall, registry, alerts, detections, trace, watchlist, audit, API clients.</td>
+      <td>TanStack Query cache kept fresh by WebSocket events; error boundary; bundled fonts.</td></tr>
+    <tr><td class="k">MySQL 8</td><td>System of record for cameras, events, alerts, watchlist, users, audit, GPS tracks.</td>
+      <td>UTC DATETIME(6); composite indexes per query path; Alembic migrations.</td></tr>
+    <tr><td class="k">Redis 7</td><td>Pub/Sub, Streams, dedup windows, rate limits, session revocation, lockout counters, leader lock.</td>
+      <td>Memory-capped; only keys with a TTL are evictable.</td></tr>
+    <tr><td class="k">Simulators</td><td>RTSP camera scenes (FFmpeg), ONVIF device, vendor NVR API, AI analytics engine, edge agent, patrol-van
+      dashcam, scripted scenarios.</td><td>Speak the real protocols, so the platform is exercised end to end.</td></tr>
+  </table>
+
+  <h3>Repository structure</h3>
+  <table>
+    <tr><th style="width:26%">Path</th><th>Contents</th></tr>
+    <tr><td class="mono">backend/app/adapters/</td><td>RTSP, ONVIF, HLS, vendor-API source adapters</td></tr>
+    <tr><td class="mono">backend/app/api/routes/</td><td>auth, cameras, events (search, trace), alerts, watchlist, system (stats, audit, WebSocket)</td></tr>
+    <tr><td class="mono">backend/app/services/</td><td>ingestion, matcher, dedup, event bus, stream consumer, health monitor, gateway client, sessions, rate limits, audit</td></tr>
+    <tr><td class="mono">backend/app/core/</td><td>configuration, security (tokens, hashing, encryption), SSRF guard, logging</td></tr>
+    <tr><td class="mono">frontend/src/</td><td>React console: pages, components (maps, players, alert view), real-time and auth hooks</td></tr>
+    <tr><td class="mono">simulator/sim/</td><td>ONVIF mock, vendor NVR, analytics engine, edge agent, dashcam, scenarios</td></tr>
+    <tr><td class="mono">infra/</td><td>camera simulator, gateway, Caddy and Prometheus configuration</td></tr>
+    <tr><td class="mono">scripts/ · docs/</td><td>environment generation, deployment, backups, outage simulation · architecture, API, security, scalability, deployment</td></tr>
+  </table>
+</div>
+
+<!-- ============================== 5. DEPLOYMENT ============================== -->
+<div class="section">
+  <div class="wide">
+  <h2><span class="num">5</span>Deployment &amp; network topology</h2>
+  <p class="lead">Eight containers on three isolated networks that mirror a real deployment: the camera VLAN, the application tier and the
+    data tier. Only the HTTPS proxy and the WebRTC media port are published.</p>
+  <div class="figure">
+  <svg viewBox="0 0 1000 470" xmlns="http://www.w3.org/2000/svg">
+    <!-- external -->
+    <rect x="360" y="8" width="300" height="34" rx="17" class="b-navy"/>
+    <text x="510" y="30" text-anchor="middle" class="t-lbl t-white">Browsers · Internet (or localhost only by default)</text>
+    <!-- bands -->
+    <rect x="10" y="70" width="980" height="110" rx="8" fill="#fff7ed" stroke="#fdba74"/>
+    <text x="22" y="90" class="t-group" style="fill:#c2410c">CAMERAS</text><text x="980" y="170" text-anchor="end" class="t-tiny" style="fill:#c2410c">camera VLAN analogue</text>
+    <rect x="10" y="195" width="980" height="110" rx="8" fill="#ecfeff" stroke="#67e8f9"/>
+    <text x="22" y="215" class="t-group">APP</text><text x="980" y="295" text-anchor="end" class="t-tiny" style="fill:#0e7490">proxy ↔ API ↔ gateway</text>
+    <rect x="10" y="320" width="980" height="110" rx="8" fill="#eff6ff" stroke="#93c5fd"/>
+    <text x="22" y="340" class="t-group" style="fill:#1d4ed8">DATA</text><text x="980" y="420" text-anchor="end" class="t-tiny" style="fill:#1d4ed8">no published ports</text>
+
+    <!-- containers: spanning rects -->
+    <!-- camsim: cameras -->
+    <rect x="30" y="100" width="120" height="68" rx="6" class="b"/>
+    <text x="90" y="122" text-anchor="middle" class="t-title">camsim</text><text x="90" y="138" text-anchor="middle" class="t-tiny">RTSP cameras :8554</text><text x="90" y="152" text-anchor="middle" class="t-tiny">FFmpeg scenes · auth</text>
+    <!-- simulator: all three -->
+    <rect x="170" y="100" width="120" height="318" rx="6" class="b"/>
+    <text x="230" y="122" text-anchor="middle" class="t-title">simulator</text><text x="230" y="138" text-anchor="middle" class="t-tiny">ONVIF :8081</text><text x="230" y="152" text-anchor="middle" class="t-tiny">vendor NVR :8090</text>
+    <text x="230" y="250" text-anchor="middle" class="t-tiny">AI engine · edge agent</text><text x="230" y="264" text-anchor="middle" class="t-tiny">dashcam (REST)</text>
+    <text x="230" y="380" text-anchor="middle" class="t-tiny">Redis Stream producer</text>
+    <!-- gateway: cameras + app -->
+    <rect x="310" y="100" width="130" height="193" rx="6" class="b-video"/>
+    <text x="375" y="122" text-anchor="middle" class="t-title">gateway</text><text x="375" y="138" text-anchor="middle" class="t-tiny">MediaMTX</text><text x="375" y="152" text-anchor="middle" class="t-tiny">pulls RTSP</text>
+    <text x="375" y="244" text-anchor="middle" class="t-tiny">HLS :8888 · WebRTC :8889</text><text x="375" y="258" text-anchor="middle" class="t-tiny">playback :9996 · API :9997</text><text x="375" y="272" text-anchor="middle" class="t-tiny">recordings volume</text>
+    <!-- backend: all -->
+    <rect x="460" y="100" width="130" height="318" rx="6" class="b-data"/>
+    <text x="525" y="122" text-anchor="middle" class="t-title">backend</text><text x="525" y="138" text-anchor="middle" class="t-tiny">probes cameras</text>
+    <text x="525" y="244" text-anchor="middle" class="t-tiny">FastAPI :8000</text><text x="525" y="258" text-anchor="middle" class="t-tiny">non-root · cap_drop ALL</text>
+    <text x="525" y="380" text-anchor="middle" class="t-tiny">SQL · Redis</text>
+    <!-- web: app -->
+    <rect x="610" y="225" width="130" height="68" rx="6" class="b-navy"/>
+    <text x="675" y="248" text-anchor="middle" class="t-title t-white">web (Caddy)</text><text x="675" y="264" text-anchor="middle" class="t-tiny" style="fill:#cbd5e1">console + TLS proxy</text><text x="675" y="278" text-anchor="middle" class="t-tiny" style="fill:#cbd5e1">:443</text>
+    <!-- prometheus optional -->
+    <rect x="760" y="225" width="110" height="68" rx="6" class="b-soft" stroke-dasharray="4 3"/>
+    <text x="815" y="248" text-anchor="middle" class="t-title">prometheus</text><text x="815" y="264" text-anchor="middle" class="t-tiny">optional profile</text><text x="815" y="278" text-anchor="middle" class="t-tiny">127.0.0.1:9090</text>
+    <!-- mysql, redis -->
+    <rect x="610" y="350" width="130" height="68" rx="6" class="b"/>
+    <text x="675" y="373" text-anchor="middle" class="t-title">mysql 8.4</text><text x="675" y="389" text-anchor="middle" class="t-tiny">volume · no binlog</text><text x="675" y="403" text-anchor="middle" class="t-tiny">1 GB limit</text>
+    <rect x="760" y="350" width="110" height="68" rx="6" class="b"/>
+    <text x="815" y="373" text-anchor="middle" class="t-title">redis 7.4</text><text x="815" y="389" text-anchor="middle" class="t-tiny">AOF · password</text><text x="815" y="403" text-anchor="middle" class="t-tiny">256 MB cap</text>
+    <!-- published ports -->
+    <path d="M620,42 V225" class="a-data" marker-end="url(#md2)"/>
+    <path d="M410,42 V100" class="a-video" marker-end="url(#mv2)"/>
+    <text x="626" y="60" class="t-tiny">443 (prod) · 127.0.0.1:8443 (local)</text>
+    <text x="416" y="60" class="t-tiny" style="fill:#c2410c">8189 udp/tcp WebRTC media</text>
+    <defs>
+      <marker id="md2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/></marker>
+      <marker id="mv2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ea580c"/></marker>
+    </defs>
+    <text x="10" y="446" class="t-tiny">A container spanning several bands is attached to each of those networks.</text>
+    <text x="10" y="460" class="t-tiny">All containers: restart unless-stopped · no-new-privileges · memory limit · rotated logs (3 × 10 MB). Backend port 8000 is bound to 127.0.0.1 for local debugging only and removed in production.</text>
+  </svg>
+  <div class="caption">Figure 2 — Containers, networks and published ports</div>
+  </div>
+  </div>
+
+  <h3>Environments</h3>
+  <table>
+    <tr><th style="width:18%">Environment</th><th>How it runs</th></tr>
+    <tr><td class="k">Local</td><td><code>make up</code> — generates random secrets, builds and starts the stack; console at
+      <code>https://localhost:8443</code> (Caddy internal CA). Ports bound to 127.0.0.1.</td></tr>
+    <tr><td class="k">Production server</td><td><code>scripts/deploy-vm.sh</code> on any Ubuntu server (x86 or ARM, e.g. an Always-Free cloud VM):
+      Docker, swap, host firewall, automatic security updates, <code>docker-compose.prod.yml</code> overrides
+      (Let's Encrypt on 80/443, one-year HSTS, public WebRTC address), nightly backups.</td></tr>
+    <tr><td class="k">Vercel (optional)</td><td>Static console with HTTP rewrites of <code>/api</code>, <code>/media</code>, <code>/playback</code>,
+      <code>/webrtc</code> to the server; WebSocket connects directly to the server (Vercel cannot proxy WebSockets).</td></tr>
+    <tr><td class="k">CI</td><td>GitHub Actions on every push: backend lint + 38 tests, simulator lint, frontend lint + build, Docker image builds.</td></tr>
+  </table>
+</div>
+
+<!-- ============================== 6. VIDEO ============================== -->
+<div class="section">
+  <div class="wide">
+  <h2><span class="num">6</span>Camera integration &amp; video path</h2>
+  <p class="lead">Five source types, one path to the browser: the gateway relays and records, the API authorises, and no camera credential ever leaves the server.</p>
+  <div class="figure">
+  <svg viewBox="0 0 1000 420" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="s1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker>
+      <marker id="s2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ea580c"/></marker>
+    </defs>
+    <g>
+      <rect x="20" y="10" width="140" height="36" rx="6" class="b-cyan"/><text x="90" y="33" text-anchor="middle" class="t-title">Browser</text>
+      <rect x="230" y="10" width="140" height="36" rx="6" class="b-data"/><text x="300" y="33" text-anchor="middle" class="t-title">API</text>
+      <rect x="440" y="10" width="140" height="36" rx="6" class="b-navy"/><text x="510" y="33" text-anchor="middle" class="t-title t-white">Caddy</text>
+      <rect x="650" y="10" width="140" height="36" rx="6" class="b-video"/><text x="720" y="33" text-anchor="middle" class="t-title">Gateway</text>
+      <rect x="850" y="10" width="140" height="36" rx="6" class="b"/><text x="920" y="33" text-anchor="middle" class="t-title">Camera</text>
+      <line x1="90" y1="46" x2="90" y2="345" class="life"/><line x1="300" y1="46" x2="300" y2="345" class="life"/>
+      <line x1="510" y1="46" x2="510" y2="345" class="life"/><line x1="720" y1="46" x2="720" y2="345" class="life"/>
+      <line x1="920" y1="46" x2="920" y2="345" class="life"/>
+    </g>
+    <g class="t-sub" stroke-width="1.6">
+      <path d="M90,75 H296" stroke="#334155" marker-end="url(#s1)"/><text x="100" y="69">1 GET /cameras/C001/playback (JWT)</text>
+      <rect x="306" y="84" width="200" height="34" rx="4" class="b-soft"/><text x="314" y="99" class="t-tiny">audit STREAM_ACCESSED (once / 10 min)</text><text x="314" y="112" class="t-tiny">sign 5-min token {cam: C001}</text>
+      <path d="M300,135 H94" stroke="#334155" marker-end="url(#s1)"/><text x="110" y="129">2 {kind: hls, url: /media/cam-c001/…, token}</text>
+      <path d="M90,170 H506" stroke="#334155" marker-end="url(#s1)"/><text x="100" y="164">3 GET /media/cam-c001/index.m3u8?token=…</text>
+      <path d="M510,190 H716" stroke="#334155" marker-end="url(#s1)"/><text x="520" y="184">4 proxy</text>
+      <path d="M720,215 H304" stroke="#334155" marker-end="url(#s1)"/><text x="470" y="209">5 POST /internal/media-auth {action, path, token}</text>
+      <path d="M300,240 H716" stroke="#16a34a" marker-end="url(#s1)"/><text x="400" y="234" style="fill:#16a34a">6 200 only if token valid and scoped to this camera</text>
+      <path d="M720,275 H916" stroke="#ea580c" marker-end="url(#s2)"/><text x="730" y="269">7 RTSP pull with decrypted credentials</text>
+      <path d="M920,300 H724" stroke="#ea580c" marker-end="url(#s2)"/><text x="760" y="294">H.264 video</text>
+      <path d="M720,330 H94" stroke="#ea580c" marker-end="url(#s2)"/><text x="330" y="324">8 LL-HLS parts / WebRTC media / MP4 clip (via Caddy)</text>
+      <text x="20" y="378" class="t-tiny">The browser only ever sees a gateway path and a short-lived, camera-scoped token. Camera credentials are stored Fernet-encrypted,</text>
+      <text x="20" y="393" class="t-tiny">never returned by the API, and inline user:pass@ URLs are rejected. The same check guards WebRTC (WHEP) and recorded playback.</text>
+    </g>
+  </svg>
+  <div class="caption">Figure 3 — Stream authorisation sequence</div>
+  </div>
+  <table>
+    <tr><th style="width:13%">Source</th><th style="width:27%">Integration</th><th style="width:26%">Health check</th><th>Browser playback</th></tr>
+    <tr><td class="k">RTSP</td><td>Gateway pulls <code>rtsp://</code> with credentials injected server-side</td><td>Gateway path ready + inbound bitrate ≥ 40 kbps</td><td>LL-HLS or WebRTC; recorded MP4</td></tr>
+    <tr><td class="k">ONVIF</td><td>SOAP <code>GetProfiles</code> → <code>GetStreamUri</code> (WS-Security digest), then RTSP pull</td><td><code>GetDeviceInformation</code> + gateway path</td><td>As RTSP</td></tr>
+    <tr><td class="k">HLS</td><td>Existing publisher, no relay needed</td><td>Manifest fetch; &gt; slow threshold = DEGRADED</td><td>Direct HLS</td></tr>
+    <tr><td class="k">Vendor API</td><td>Proprietary REST: <code>/status</code>, <code>/snapshot.jpg</code> with API key</td><td>Vendor status (online / signal / fps)</td><td>1 fps snapshot proxy (low bandwidth)</td></tr>
+    <tr><td class="k">Dashcam</td><td>RTSP over 4G + GPS heartbeats every 3 s</td><td>Heartbeat age (30 s degraded / 90 s offline) combined with video availability</td><td>LL-HLS / WebRTC; live GPS track</td></tr>
+  </table>
+
+  <p class="small">Bandwidth: recorded and live video stay inside the platform network; the gateway can pull on demand (only while viewed),
+    and vendor cameras on weak links are served as 1 fps snapshots. At scale, analytics run at the edge and only event metadata is uplinked (section 14).</p>
+  </div>
+</div>
+
+<!-- ============================== 7. INGESTION ============================== -->
+<div class="section">
+  <div class="wide">
+  <h2><span class="num">7</span>AI event ingestion pipeline</h2>
+  <p class="lead">One pipeline serves the REST API, the batch API and the Redis Stream consumer. Each stage has a single job and a clear
+    outcome for the producer.</p>
+  <div class="figure">
+  <svg viewBox="0 0 1000 280" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="p1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#0e7490"/></marker>
+      <marker id="p2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker></defs>
+    <g>
+      <rect x="10" y="30" width="112" height="86" rx="6" class="b-event"/><text x="66" y="54" text-anchor="middle" class="t-lbl">Producer</text><text x="66" y="72" text-anchor="middle" class="t-tiny">REST · batch (≤500)</text><text x="66" y="86" text-anchor="middle" class="t-tiny">Redis Stream</text><text x="66" y="100" text-anchor="middle" class="t-tiny">API key + scope</text>
+      <rect x="142" y="30" width="112" height="86" rx="6" class="b"/><text x="198" y="54" text-anchor="middle" class="t-lbl">1 Validate</text><text x="198" y="72" text-anchor="middle" class="t-tiny">schema · camera on</text><text x="198" y="86" text-anchor="middle" class="t-tiny">clock skew ≤ 5 min</text><text x="198" y="100" text-anchor="middle" class="t-tiny">age ≤ 72 h</text>
+      <rect x="274" y="30" width="112" height="86" rx="6" class="b"/><text x="330" y="54" text-anchor="middle" class="t-lbl">2 Idempotency</text><text x="330" y="72" text-anchor="middle" class="t-tiny">unique event_id</text><text x="330" y="86" text-anchor="middle" class="t-tiny">retry → same row</text>
+      <rect x="406" y="30" width="112" height="86" rx="6" class="b"/><text x="462" y="54" text-anchor="middle" class="t-lbl">3 Dedup window</text><text x="462" y="72" text-anchor="middle" class="t-tiny">Redis SET NX EX 60 s</text><text x="462" y="86" text-anchor="middle" class="t-tiny">camera+type+identity</text><text x="462" y="100" text-anchor="middle" class="t-tiny">repeat → count++</text>
+      <rect x="538" y="30" width="112" height="86" rx="6" class="b"/><text x="594" y="54" text-anchor="middle" class="t-lbl">4 Persist</text><text x="594" y="72" text-anchor="middle" class="t-tiny">MySQL row</text><text x="594" y="86" text-anchor="middle" class="t-tiny">location snapshot</text><text x="594" y="100" text-anchor="middle" class="t-tiny">(GPS for dashcams)</text>
+      <rect x="670" y="30" width="112" height="86" rx="6" class="b"/><text x="726" y="54" text-anchor="middle" class="t-lbl">5 Correlate</text><text x="726" y="72" text-anchor="middle" class="t-tiny">exact / fuzzy</text><text x="726" y="86" text-anchor="middle" class="t-tiny">confidence ≥ 0.60</text><text x="726" y="100" text-anchor="middle" class="t-tiny">alert or hit_count++</text>
+      <rect x="802" y="30" width="188" height="86" rx="6" class="b-cyan"/><text x="896" y="54" text-anchor="middle" class="t-lbl">6 Commit → publish</text><text x="896" y="72" text-anchor="middle" class="t-tiny">detection.created · alert.created</text><text x="896" y="86" text-anchor="middle" class="t-tiny">alert.updated → every console</text><text x="896" y="100" text-anchor="middle" class="t-tiny">only after the data is durable</text>
+      <path d="M122,73 H138" stroke="#0e7490" stroke-width="2" marker-end="url(#p1)"/><path d="M254,73 H270" stroke="#0e7490" stroke-width="2" marker-end="url(#p1)"/>
+      <path d="M386,73 H402" stroke="#0e7490" stroke-width="2" marker-end="url(#p1)"/><path d="M518,73 H534" stroke="#0e7490" stroke-width="2" marker-end="url(#p1)"/>
+      <path d="M650,73 H666" stroke="#0e7490" stroke-width="2" marker-end="url(#p1)"/><path d="M782,73 H798" stroke="#0e7490" stroke-width="2" marker-end="url(#p1)"/>
+      <path d="M198,116 V160" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#p2)"/><rect x="142" y="162" width="112" height="44" rx="5" class="b-soft"/><text x="198" y="180" text-anchor="middle" class="t-lbl" style="fill:#dc2626">404/409/422</text><text x="198" y="195" text-anchor="middle" class="t-tiny">rejected · stream DLQ</text>
+      <path d="M330,116 V160" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#p2)"/><rect x="274" y="162" width="112" height="44" rx="5" class="b-soft"/><text x="330" y="180" text-anchor="middle" class="t-lbl">200 duplicate</text><text x="330" y="195" text-anchor="middle" class="t-tiny">safe retry</text>
+      <path d="M462,116 V160" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#p2)"/><rect x="406" y="162" width="112" height="44" rx="5" class="b-soft"/><text x="462" y="180" text-anchor="middle" class="t-lbl">200 suppressed</text><text x="462" y="195" text-anchor="middle" class="t-tiny">folded into original</text>
+      <path d="M896,116 V160" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#p2)"/><rect x="802" y="162" width="188" height="44" rx="5" class="b-soft"/><text x="896" y="180" text-anchor="middle" class="t-lbl" style="fill:#16a34a">201 created</text><text x="896" y="195" text-anchor="middle" class="t-tiny">{event_id, alert_ids}</text>
+      <text x="10" y="245" class="t-sub">Measured: 10 repeat reads of one passing vehicle → 1 stored event with repeat_count = 9; a retried POST returns the original event;</text>
+      <text x="10" y="261" class="t-sub">a watchlisted plate appears as an alert on every open console in under a second.</text>
+    </g>
+  </svg>
+  <div class="caption">Figure 4 — Ingestion stages and outcomes</div>
+  </div>
+
+  <h3>Event contract</h3>
+  <table>
+    <tr><th style="width:22%">Field</th><th style="width:18%">Required</th><th>Meaning / validation</th></tr>
+    <tr><td class="mono">event_id</td><td>recommended</td><td>Producer-side unique id → idempotent retries</td></tr>
+    <tr><td class="mono">camera_id</td><td>yes</td><td>Must exist and be enabled</td></tr>
+    <tr><td class="mono">event_type</td><td>yes</td><td>ANPR · VEHICLE_DETECTION · PERSON_DETECTION · FACE_RECOGNITION · OBJECT_DETECTION · OVERSPEED · HARSH_BRAKING · COLLISION_WARNING · DRIVER_DROWSINESS</td></tr>
+    <tr><td class="mono">timestamp</td><td>yes</td><td>ISO-8601 with timezone; ≤ 5 min in the future, ≤ 72 h old</td></tr>
+    <tr><td class="mono">vehicle_number</td><td>ANPR</td><td>4–12 alphanumerics after normalisation; Indian / BH format flagged</td></tr>
+    <tr><td class="mono">person_ref</td><td>face recognition</td><td>Gallery identifier matched against person watchlist entries</td></tr>
+    <tr><td class="mono">confidence</td><td>yes</td><td>0–1; alerts only at ≥ 0.60</td></tr>
+    <tr><td class="mono">bounding_box</td><td>optional</td><td>x, y, w, h (pixels or normalised)</td></tr>
+    <tr><td class="mono">latitude / longitude</td><td>mobile cameras</td><td>Capture position; both or neither; fixed cameras use the registry location</td></tr>
+    <tr><td class="mono">vehicle_type · colour · model_name · snapshot_url · attributes</td><td>optional</td><td>Enrichment; size-limited</td></tr>
+  </table>
+  </div>
+</div>
+
+<!-- ============================== 8. CORRELATION ============================== -->
+<div class="section">
+  <h2><span class="num">8</span>Watchlist correlation &amp; alerting</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>Matching</h3>
+      <ul>
+        <li><b>Normalisation</b>: upper-case, strip spaces and punctuation (<code>GJ 01 XX 0001</code> = <code>GJ01XX0001</code>).</li>
+        <li><b>Exact</b>: dictionary lookup per entity type (vehicle / person).</li>
+        <li><b>Fuzzy</b> (vehicles, ≥ 6 characters): SymSpell deletion index finds every entry within edit distance 1 in O(length),
+          independent of watchlist size — covers OCR confusions such as 0↔O, 8↔B, a dropped character.</li>
+        <li>Fuzzy matches are raised one severity lower and labelled <i>possible match</i>.</li>
+        <li>Expired (<code>valid_until</code>) and inactive entries never match; changes propagate to all replicas via a Redis version counter.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Alert life-cycle</h3>
+      <svg viewBox="0 0 440 150" xmlns="http://www.w3.org/2000/svg">
+        <defs><marker id="l1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#334155"/></marker></defs>
+        <rect x="5" y="55" width="80" height="36" rx="18" fill="#fee2e2" stroke="#fca5a5"/><text x="45" y="77" text-anchor="middle" class="t-lbl">NEW</text>
+        <rect x="140" y="55" width="120" height="36" rx="18" fill="#fef3c7" stroke="#fcd34d"/><text x="200" y="77" text-anchor="middle" class="t-lbl">ACKNOWLEDGED</text>
+        <rect x="315" y="15" width="120" height="36" rx="18" fill="#dcfce7" stroke="#86efac"/><text x="375" y="37" text-anchor="middle" class="t-lbl">RESOLVED</text>
+        <rect x="315" y="95" width="120" height="36" rx="18" fill="#f1f5f9" stroke="#cbd5e1"/><text x="375" y="117" text-anchor="middle" class="t-lbl">FALSE POSITIVE</text>
+        <path d="M85,73 H136" stroke="#334155" stroke-width="1.6" marker-end="url(#l1)"/>
+        <path d="M260,66 L312,40" stroke="#334155" stroke-width="1.6" marker-end="url(#l1)"/>
+        <path d="M260,80 L312,106" stroke="#334155" stroke-width="1.6" marker-end="url(#l1)"/>
+        <path d="M45,55 C 60,5 250,5 312,30" stroke="#94a3b8" stroke-dasharray="4 3" stroke-width="1.4" fill="none" marker-end="url(#l1)"/>
+        <text x="88" y="68" class="t-tiny">ack + note</text><text x="150" y="9" class="t-tiny">direct resolve (note required)</text>
+        <text x="5" y="145" class="t-tiny">Every transition is audited with the operator, time and note; bulk actions audit each alert.</text>
+      </svg>
+    </div>
+  </div>
+
+  <h3>Storm control — "prevent duplicate or uncontrolled event generation" (brief §9)</h3>
+  <table>
+    <tr><th style="width:24%">Layer</th><th style="width:40%">Mechanism</th><th>Effect</th></tr>
+    <tr><td class="k">Transport retries</td><td>Unique <code>event_uid</code></td><td>A retried request or re-delivered stream message never creates a second row</td></tr>
+    <tr><td class="k">Sensor repeats</td><td>Redis <code>SET NX EX</code> per camera + type + identity (60 s)</td><td>Many reads of one passing vehicle → one event with a repeat count</td></tr>
+    <tr><td class="k">Alert storms</td><td>Open alert for the same entity at the same camera within 5 min is updated (<code>hit_count</code>)</td><td>One actionable alert instead of dozens</td></tr>
+    <tr><td class="k">Low-quality reads</td><td>Minimum confidence 0.60; fuzzy matches downgraded</td><td>Fewer false positives reach operators</td></tr>
+    <tr><td class="k">Abusive producers</td><td>Per-API-key rate limit (6,000 / min) and 2 MB body limit</td><td>No single source can flood the platform</td></tr>
+  </table>
+
+  <h3>What the operator sees</h3>
+  <p>A toast with sound (triple beep for CRITICAL) and a pulsing map marker appear instantly. The alert view shows the watchlist record
+    (description, make, colour, case reference, agency), the detection in plain language (plate read, confidence, time, camera, address,
+    vehicle seen, number of reads, where the plate was in the frame), warnings for colour mismatch or non-standard plate formats, the
+    camera's live feed, a 40-second recorded evidence clip around the moment of detection, and a response map with the operator's own
+    location, the wanted vehicle's latest sighting, distance and estimated drive time, with a one-click route.</p>
+
+  <h3>Movement tracing</h3>
+  <p>The trace endpoint returns the most recent 2,000 sightings of an identity in chronological order with leg distance (haversine), elapsed
+    time and implied speed. Two sightings more than 1 km apart at an implied speed above 160 km/h are flagged as <b>impossible travel —
+    possible cloned or duplicate plate</b>. The brief's example (GJ01XX0001 at 10:02 → 10:18 → 10:41) is reproduced by
+    <code>make scenario</code> and shown as a numbered route on the map.</p>
+</div>
+
+<!-- ============================== 9. REAL-TIME ============================== -->
+<div class="section">
+  <div class="wide">
+  <h2><span class="num">9</span>Real-time architecture</h2>
+  <div class="figure">
+  <svg viewBox="0 0 1000 330" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="r1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker>
+      <marker id="r2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2563eb"/></marker></defs>
+    <!-- producers -->
+    <rect x="10" y="55" width="160" height="70" rx="6" class="b-event"/><text x="90" y="84" text-anchor="middle" class="t-title">REST producers</text><text x="90" y="102" text-anchor="middle" class="t-tiny">AI engines · edge agents</text>
+    <rect x="10" y="215" width="160" height="70" rx="6" class="b-event"/><text x="90" y="244" text-anchor="middle" class="t-title">Stream producers</text><text x="90" y="262" text-anchor="middle" class="t-tiny">XADD netra:ingest:detections</text>
+    <!-- redis streams -->
+    <rect x="225" y="205" width="185" height="90" rx="8" class="b"/><text x="317" y="229" text-anchor="middle" class="t-title">Redis Streams</text>
+    <text x="317" y="247" text-anchor="middle" class="t-tiny">consumer group netra-ingest</text><text x="317" y="262" text-anchor="middle" class="t-tiny">ACK after commit · reclaim 60 s</text><text x="317" y="277" text-anchor="middle" class="t-tiny">dead-letter stream</text>
+    <!-- api replicas group -->
+    <rect x="465" y="15" width="170" height="285" rx="10" class="frame"/>
+    <text x="550" y="33" text-anchor="middle" class="t-group">API TIER</text>
+    <rect x="480" y="45" width="140" height="62" rx="6" class="b-data"/><text x="550" y="71" text-anchor="middle" class="t-title">Replica 1</text><text x="550" y="88" text-anchor="middle" class="t-tiny">ingest · sockets</text>
+    <rect x="480" y="125" width="140" height="62" rx="6" class="b-data"/><text x="550" y="151" text-anchor="middle" class="t-title">Replica 2</text><text x="550" y="168" text-anchor="middle" class="t-tiny">ingest · sockets</text>
+    <rect x="480" y="210" width="140" height="75" rx="6" class="b-data"/><text x="550" y="236" text-anchor="middle" class="t-title">Replica N</text><text x="550" y="253" text-anchor="middle" class="t-tiny">stream consumer</text><text x="550" y="267" text-anchor="middle" class="t-tiny">ingest · sockets</text>
+    <!-- pub/sub -->
+    <rect x="700" y="15" width="290" height="90" rx="8" class="b"/><text x="845" y="40" text-anchor="middle" class="t-title">Redis Pub/Sub · channel netra:realtime</text>
+    <text x="845" y="60" text-anchor="middle" class="t-tiny">replicas publish after the database commit</text><text x="845" y="76" text-anchor="middle" class="t-tiny">every replica subscribes and delivers to its own sockets</text>
+    <!-- consoles -->
+    <rect x="700" y="130" width="290" height="170" rx="8" class="b-cyan"/><text x="845" y="152" text-anchor="middle" class="t-title">Consoles (WebSocket)</text>
+    <g class="t-tiny"><text x="714" y="174">detection.created → live feed, KPIs</text><text x="714" y="190">alert.created → toast, sound, marker</text>
+      <text x="714" y="206">alert.updated → queues refresh</text><text x="714" y="222">camera.status / location → map</text>
+      <text x="714" y="238">camera.created / updated · watchlist.changed</text>
+      <text x="714" y="262">JWT on connect · revocation checked</text><text x="714" y="278">ping 25 s · back-off · catch-up refetch</text></g>
+    <!-- arrows -->
+    <path d="M170,90 H476" class="a-event" marker-end="url(#r1)"/><text x="318" y="82" text-anchor="middle" class="t-tiny" style="fill:#16a34a">POST /events · X-API-Key</text>
+    <path d="M170,250 H221" class="a-event" marker-end="url(#r1)"/>
+    <path d="M410,250 H476" class="a-event" marker-end="url(#r1)"/><text x="443" y="242" text-anchor="middle" class="t-tiny" style="fill:#16a34a">claim</text>
+    <path d="M635,50 H696" class="a-data" marker-end="url(#r2)"/><text x="665" y="44" text-anchor="middle" class="t-tiny" style="fill:#2563eb">publish</text>
+    <path d="M700,85 H639" class="a-data" marker-end="url(#r2)"/><text x="665" y="100" text-anchor="middle" class="t-tiny" style="fill:#2563eb">fan-out</text>
+    <path d="M635,215 H696" class="a-data" marker-end="url(#r2)"/><text x="665" y="208" text-anchor="middle" class="t-tiny" style="fill:#2563eb">WSS</text>
+    <text x="10" y="322" class="t-tiny">Any replica can publish; every replica delivers to its own sockets — no sticky sessions, so the API tier scales behind any load balancer. Without Redis (tests) an in-process bus is used.</text>
+  </svg>
+  <div class="caption">Figure 5 — Real-time fan-out and message-channel ingestion</div>
+  </div>
+  <table>
+    <tr><th style="width:24%">Concern</th><th>Design</th></tr>
+    <tr><td class="k">Consistency</td><td>Messages are published only after the database transaction commits, so a console never shows data that does not exist.</td></tr>
+    <tr><td class="k">Delivery</td><td>If Redis publishing fails, the replica still delivers to its local sockets; consoles re-fetch on reconnect.</td></tr>
+    <tr><td class="k">Back-pressure</td><td>Slow sockets are dropped after a 2 s send timeout; the console throttles cache invalidation to one flush per 1.2 s.</td></tr>
+    <tr><td class="k">Message channel</td><td>Redis Streams give at-least-once delivery with consumer groups; at state scale the same contract moves to Kafka partitioned by camera.</td></tr>
+  </table>
+  </div>
+</div>
+
+<!-- ============================== 10. DATA MODEL ============================== -->
+<div class="section">
+  <div class="wide">
+  <h2><span class="num">10</span>Data model</h2>
+  <div class="figure">
+  <svg viewBox="0 0 1000 640" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="many" viewBox="0 0 12 12" refX="11" refY="6" markerWidth="10" markerHeight="10" orient="auto"><path d="M11,6 L1,1 M11,6 L1,6 M11,6 L1,11" stroke="#0f2742" stroke-width="1.4" fill="none"/></marker>
+    </defs>
+    <style>.eh{fill:#0f2742}.ef{font-size:9.2px;fill:#1e293b}.ek{font-size:9.2px;fill:#0e7490;font-weight:700}.en{font-size:11px;font-weight:700;fill:#fff}.rel{stroke:#0f2742;stroke-width:1.4;fill:none}</style>
+    <!-- departments -->
+    <g transform="translate(20,20)"><rect width="200" height="92" rx="5" fill="#fff" stroke="#94a3b8"/><rect width="200" height="22" rx="5" class="eh"/><text x="10" y="15" class="en">departments</text>
+      <text x="10" y="40" class="ek">PK id</text><text x="10" y="55" class="ef">code UK · name</text><text x="10" y="70" class="ef">created_at</text></g>
+    <!-- users -->
+    <g transform="translate(20,190)"><rect width="200" height="140" rx="5" fill="#fff" stroke="#94a3b8"/><rect width="200" height="22" rx="5" class="eh"/><text x="10" y="15" class="en">users</text>
+      <text x="10" y="40" class="ek">PK id</text><text x="10" y="55" class="ef">username UK · full_name</text><text x="10" y="70" class="ef">password_hash (bcrypt)</text><text x="10" y="85" class="ef">role ADMIN|OPERATOR|VIEWER</text>
+      <text x="10" y="100" class="ek">FK department_id</text><text x="10" y="115" class="ef">is_active · last_login_at</text></g>
+    <!-- api_clients -->
+    <g transform="translate(20,420)"><rect width="200" height="110" rx="5" fill="#fff" stroke="#94a3b8"/><rect width="200" height="22" rx="5" class="eh"/><text x="10" y="15" class="en">api_clients</text>
+      <text x="10" y="40" class="ek">PK id</text><text x="10" y="55" class="ef">name UK · key_prefix</text><text x="10" y="70" class="ef">key_hash UK (HMAC-SHA256)</text><text x="10" y="85" class="ef">scopes (JSON) · is_active</text><text x="10" y="100" class="ef">last_used_at</text></g>
+    <!-- cameras -->
+    <g transform="translate(270,20)"><rect width="210" height="330" rx="5" fill="#fff" stroke="#94a3b8"/><rect width="210" height="22" rx="5" class="eh"/><text x="10" y="15" class="en">cameras</text>
+      <text x="10" y="40" class="ek">PK id  (e.g. C001)</text><text x="10" y="55" class="ef">name · zone · address</text><text x="10" y="70" class="ek">FK department_id</text>
+      <text x="10" y="85" class="ef">latitude · longitude (latest fix)</text><text x="10" y="100" class="ef">camera_type (… DASHCAM)</text><text x="10" y="115" class="ef">source_protocol (4 types)</text>
+      <text x="10" y="130" class="ef">stream_endpoint (no credentials)</text><text x="10" y="145" class="ef">stream_username</text><text x="10" y="160" class="ef">stream_secret_enc (Fernet)</text>
+      <text x="10" y="175" class="ef">resolved_stream_uri · gateway_path</text><text x="10" y="190" class="ef">vendor · model · resolution · fps</text>
+      <text x="10" y="205" class="ef">recording_enabled · storage_tier</text><text x="10" y="220" class="ef">storage_location · retention_days</text>
+      <text x="10" y="235" class="ef">health_mode PROBE|HEARTBEAT</text><text x="10" y="250" class="ef">status · status_reason · changed_at</text>
+      <text x="10" y="265" class="ef">last_heartbeat_at · health_metrics</text><text x="10" y="280" class="ef">speed_kmh · heading_deg</text>
+      <text x="10" y="295" class="ef">is_enabled · onboarding_source · tags</text><text x="10" y="310" class="ef">created_at · updated_at</text></g>
+    <!-- camera_positions -->
+    <g transform="translate(270,420)"><rect width="210" height="110" rx="5" fill="#fff" stroke="#94a3b8"/><rect width="210" height="22" rx="5" class="eh"/><text x="10" y="15" class="en">camera_positions</text>
+      <text x="10" y="40" class="ek">PK id (BIGINT)</text><text x="10" y="55" class="ek">FK camera_id</text><text x="10" y="70" class="ef">recorded_at · latitude · longitude</text><text x="10" y="85" class="ef">speed_kmh · heading_deg</text><text x="10" y="100" class="ef">retention 48 h</text></g>
+    <!-- detection_events -->
+    <g transform="translate(530,20)"><rect width="210" height="270" rx="5" fill="#fff" stroke="#94a3b8"/><rect width="210" height="22" rx="5" class="eh"/><text x="10" y="15" class="en">detection_events</text>
+      <text x="10" y="40" class="ek">PK id (BIGINT)</text><text x="10" y="55" class="ef">event_uid UK (idempotency)</text><text x="10" y="70" class="ek">FK camera_id</text>
+      <text x="10" y="85" class="ef">event_type · detected_at · received_at</text><text x="10" y="100" class="ef">identifier · identifier_normalized</text>
+      <text x="10" y="115" class="ef">vehicle_type · vehicle_color</text><text x="10" y="130" class="ef">object_label · confidence</text>
+      <text x="10" y="145" class="ef">bounding_box · snapshot_url (JSON/str)</text><text x="10" y="160" class="ef">model_name · source_client</text>
+      <text x="10" y="175" class="ef">attributes (JSON)</text><text x="10" y="190" class="ef">latitude · longitude (snapshot)</text>
+      <text x="10" y="205" class="ef">repeat_count · last_seen_at</text><text x="10" y="220" class="ef">watchlist_hit</text>
+      <text x="10" y="245" class="ef" style="fill:#64748b">retention 30 days (alert evidence kept)</text></g>
+    <!-- alerts -->
+    <g transform="translate(530,340)"><rect width="210" height="250" rx="5" fill="#fff" stroke="#94a3b8"/><rect width="210" height="22" rx="5" class="eh"/><text x="10" y="15" class="en">alerts</text>
+      <text x="10" y="40" class="ek">PK id</text><text x="10" y="55" class="ek">FK event_id</text><text x="10" y="70" class="ek">FK watchlist_entry_id</text><text x="10" y="85" class="ek">FK camera_id</text>
+      <text x="10" y="100" class="ef">identifier · identifier_normalized</text><text x="10" y="115" class="ef">match_type EXACT|FUZZY</text>
+      <text x="10" y="130" class="ef">confidence · severity · title</text><text x="10" y="145" class="ef">status NEW|ACK|RESOLVED|FALSE_POS</text>
+      <text x="10" y="160" class="ef">latitude · longitude</text><text x="10" y="175" class="ef">triggered_at · hit_count · last_hit_at</text>
+      <text x="10" y="190" class="ek">FK acknowledged_by · resolved_by</text><text x="10" y="205" class="ef">acknowledged_at · resolved_at</text><text x="10" y="220" class="ef">resolution_note</text></g>
+    <!-- watchlist -->
+    <g transform="translate(780,20)"><rect width="200" height="205" rx="5" fill="#fff" stroke="#94a3b8"/><rect width="200" height="22" rx="5" class="eh"/><text x="10" y="15" class="en">watchlist_entries</text>
+      <text x="10" y="40" class="ek">PK id</text><text x="10" y="55" class="ef">entity_type VEHICLE|PERSON</text><text x="10" y="70" class="ef">identifier</text>
+      <text x="10" y="85" class="ef">identifier_normalized</text><text x="10" y="100" class="ef">  UK(entity_type, normalized)</text><text x="10" y="115" class="ef">category · severity</text>
+      <text x="10" y="130" class="ef">description · attributes</text><text x="10" y="145" class="ef">case_reference · source_agency</text><text x="10" y="160" class="ef">is_active · valid_until</text>
+      <text x="10" y="175" class="ek">FK created_by</text><text x="10" y="190" class="ef">created_at · updated_at</text></g>
+    <!-- audit -->
+    <g transform="translate(780,340)"><rect width="200" height="160" rx="5" fill="#fff" stroke="#94a3b8"/><rect width="200" height="22" rx="5" class="eh"/><text x="10" y="15" class="en">audit_logs</text>
+      <text x="10" y="40" class="ek">PK id (BIGINT)</text><text x="10" y="55" class="ef">created_at</text><text x="10" y="70" class="ef">actor_type USER|API_CLIENT|SYSTEM</text>
+      <text x="10" y="85" class="ef">actor_id · actor_name</text><text x="10" y="100" class="ef">action · entity_type · entity_id</text><text x="10" y="115" class="ef">details (JSON) · ip_address</text>
+      <text x="10" y="140" class="ef" style="fill:#64748b">append-only · never pruned</text></g>
+
+    <!-- relationships (1 -> many arrow = crow's foot at the many end) -->
+    <path d="M220,55 H266" class="rel" marker-end="url(#many)"/>
+    <path d="M120,112 V186" class="rel" marker-end="url(#many)"/>
+    <path d="M375,350 V416" class="rel" marker-end="url(#many)"/>
+    <path d="M480,80 H526" class="rel" marker-end="url(#many)"/>
+    <path d="M635,290 V336" class="rel" marker-end="url(#many)"/>
+    <path d="M880,225 V250 H760 V380 H744" class="rel" marker-end="url(#many)"/>
+    <path d="M480,300 H505 V470 H526" class="rel" marker-end="url(#many)"/>
+    <path d="M220,300 H245 V600 H635 V594" class="rel" marker-end="url(#many)"/>
+    <text x="224" y="50" class="t-tiny">1 : N</text><text x="484" y="75" class="t-tiny">1 : N</text><text x="640" y="316" class="t-tiny">1 : N</text>
+    <text x="764" y="246" class="t-tiny">1 : N</text><text x="380" y="385" class="t-tiny">1 : N</text><text x="510" y="460" class="t-tiny">1 : N</text>
+    <text x="250" y="615" class="t-tiny">users acknowledge / resolve alerts · users create watchlist entries</text>
+  </svg>
+  <div class="caption">Figure 6 — Entity-relationship diagram (9 tables, MySQL 8, managed by Alembic)</div>
+  </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3 style="margin-top:0">Indexes — one per query path</h3>
+  <table>
+    <tr><th style="width:22%">Table</th><th style="width:36%">Index</th><th>Serves</th></tr>
+    <tr><td class="mono">detection_events</td><td class="mono">(identifier_normalized, detected_at)</td><td>Entity search and movement trace</td></tr>
+    <tr><td class="mono">detection_events</td><td class="mono">(camera_id, detected_at)</td><td>Per-camera history</td></tr>
+    <tr><td class="mono">detection_events</td><td class="mono">(event_type, detected_at), (detected_at)</td><td>Filtered history, hourly trends, retention</td></tr>
+    <tr><td class="mono">detection_events</td><td class="mono">UNIQUE (event_uid)</td><td>Idempotency</td></tr>
+    <tr><td class="mono">alerts</td><td class="mono">(status, triggered_at)</td><td>Open-alert queue</td></tr>
+    <tr><td class="mono">alerts</td><td class="mono">(watchlist_entry_id, camera_id, last_hit_at)</td><td>Cool-down lookup on the hot path</td></tr>
+    <tr><td class="mono">alerts</td><td class="mono">(identifier_normalized)</td><td>Alerts per entity</td></tr>
+    <tr><td class="mono">cameras</td><td class="mono">(status), (department_id, zone), (source_protocol), (latitude, longitude)</td><td>Registry filters and map</td></tr>
+    <tr><td class="mono">camera_positions</td><td class="mono">(camera_id, recorded_at)</td><td>Dashcam track queries and pruning</td></tr>
+    <tr><td class="mono">watchlist_entries</td><td class="mono">UNIQUE (entity_type, identifier_normalized), (is_active)</td><td>No duplicates; active-list load</td></tr>
+    <tr><td class="mono">audit_logs</td><td class="mono">(entity_type, entity_id, created_at), (created_at)</td><td>Per-object history and audit page</td></tr>
+  </table>
+  <h3>Data conventions</h3>
+  <ul>
+    <li>All timestamps stored as UTC <code>DATETIME(6)</code> and returned timezone-aware; enums stored as strings for portable migrations.</li>
+    <li>Events keep a <b>location snapshot</b> so history stays correct when a camera is moved (and is exact for moving dashcams).</li>
+    <li>Watchlist entries are deactivated, never deleted, so past alerts remain explainable; audit logs are never pruned.</li>
+    <li>Schema is portable to Amazon RDS / Aurora MySQL without changes; at scale <code>detection_events</code> is partitioned by month.</li>
+  </ul>
+</div>
+
+<!-- ============================== 11. API ============================== -->
+<div class="section">
+  <h2><span class="num">11</span>API design</h2>
+  <p class="lead">RESTful JSON under <code>/api/v1</code>, documented with OpenAPI (Swagger UI at <code>/api/docs</code>). Consistent
+    pagination (<code>items, total, limit, offset</code>), errors as <code>{"detail": …}</code> with field-level validation messages.</p>
+  <table>
+    <tr><th style="width:30%">Area</th><th style="width:48%">Endpoints</th><th>Access</th></tr>
+    <tr><td class="k">Auth &amp; users</td><td class="mono">POST /auth/login · /auth/token · /auth/logout · GET /auth/me · /users · /departments</td><td>public login · any user · admin</td></tr>
+    <tr><td class="k">Machine identities</td><td class="mono">GET/POST /api-clients · POST /api-clients/{id}/revoke</td><td>admin</td></tr>
+    <tr><td class="k">Cameras</td><td class="mono">GET/POST /cameras · POST /cameras/bulk · GET/PATCH /cameras/{id} · GET /cameras/zones</td><td>any (read) · admin or API key <i>cameras:write</i></td></tr>
+    <tr><td class="k">Camera operations</td><td class="mono">POST /cameras/{id}/heartbeat · /probe · GET /cameras/{id}/audit · /track</td><td>API key <i>cameras:heartbeat</i> · operator · any</td></tr>
+    <tr><td class="k">Video</td><td class="mono">GET /cameras/{id}/playback · /snapshot · /recordings · /clip · POST /onvif/discover</td><td>any (stream token) · admin</td></tr>
+    <tr><td class="k">Analytics events</td><td class="mono">POST /events · /events/batch · GET /events · /events/{id} · /events/export.csv</td><td>API key <i>events:write</i> · any · operator</td></tr>
+    <tr><td class="k">Search &amp; trace</td><td class="mono">GET /search?q= · /trace/{identifier}</td><td>any</td></tr>
+    <tr><td class="k">Watchlist</td><td class="mono">GET/POST /watchlist · PATCH/DELETE /watchlist/{id}</td><td>any (read) · operator</td></tr>
+    <tr><td class="k">Alerts</td><td class="mono">GET /alerts · /alerts/{id} · POST /alerts/{id}/acknowledge · /resolve · /alerts/bulk</td><td>any (read) · operator</td></tr>
+    <tr><td class="k">Stats &amp; audit</td><td class="mono">GET /stats/overview · /stats/timeseries · /audit</td><td>any · admin</td></tr>
+    <tr><td class="k">Real-time</td><td class="mono">WS /ws?token=…</td><td>any user</td></tr>
+    <tr><td class="k">System</td><td class="mono">GET /api/health · /api/ready · /api/metrics (internal)</td><td>probes · Prometheus</td></tr>
+  </table>
+  <h3>Example — one backend workflow</h3>
+  <table>
+    <tr><th style="width:6%">#</th><th>Request</th><th style="width:36%">Result</th></tr>
+    <tr><td>1</td><td class="mono">POST /api/v1/events  X-API-Key: ntr_…  {"event_id":"edge-42-187","camera_id":"C001","event_type":"ANPR",
+      "timestamp":"2026-09-26T10:02:11+05:30","vehicle_number":"GJ01XX0001","confidence":0.94}</td><td>201 {event_id, alert_ids:[…]} — watchlisted stolen vehicle</td></tr>
+    <tr><td>2</td><td>Every console receives <code>alert.created</code> over the WebSocket</td><td>Toast, sound, marker pulse, queue entry</td></tr>
+    <tr><td>3</td><td class="mono">POST /api/v1/alerts/{id}/acknowledge {"note":"PCR 12 dispatched"}</td><td>ACKNOWLEDGED, audited, pushed to all consoles</td></tr>
+    <tr><td>4</td><td class="mono">GET /api/v1/trace/GJ01XX0001</td><td>Chronological stops, distances, speeds, anomalies</td></tr>
+  </table>
+</div>
+
+<!-- ============================== 12. SECURITY ============================== -->
+<div class="section">
+  <div class="wide">
+  <h2><span class="num">12</span>Security architecture</h2>
+  <p class="lead">Defence in depth: each layer assumes the one in front of it may fail.</p>
+  <div class="figure">
+  <svg viewBox="0 0 1000 250" xmlns="http://www.w3.org/2000/svg">
+    <g>
+      <rect x="10" y="10" width="980" height="230" rx="10" fill="#0f2742"/>
+      <text x="26" y="34" class="t-lbl t-white">NETWORK · localhost-only by default · segmented networks · only 443 and WebRTC media published · internal paths blocked at the proxy</text>
+      <rect x="30" y="46" width="940" height="184" rx="9" fill="#164e63"/>
+      <text x="46" y="68" class="t-lbl t-white">TRANSPORT &amp; BROWSER · TLS (Let's Encrypt) · HSTS in production · strict CSP · frame / sniff / referrer / permissions policies · body limits</text>
+      <rect x="50" y="80" width="900" height="140" rx="8" fill="#0e7490"/>
+      <text x="66" y="102" class="t-lbl t-white">IDENTITY · JWT with jti · server-side logout · account lockout · RBAC on every route · scoped, hashed API keys · rate limits</text>
+      <rect x="70" y="114" width="860" height="96" rx="7" fill="#ecfeff"/>
+      <text x="86" y="136" class="t-lbl">APPLICATION · strict input schemas · SSRF guard (save time + after DNS, every redirect) · camera-scoped 5-min stream tokens · gateway</text>
+      <text x="86" y="152" class="t-lbl">control API secret · defusedxml for ONVIF · generic 500s · snapshot proxy relays images only</text>
+      <rect x="90" y="164" width="820" height="38" rx="6" fill="#fff" stroke="#67e8f9"/>
+      <text x="106" y="188" class="t-lbl">DATA · Fernet-encrypted camera credentials · bcrypt passwords · secrets only in .env (chmod 600) · append-only audit · least-privilege containers</text>
+    </g>
+  </svg>
+  <div class="caption">Figure 7 — Security layers</div>
+  </div>
+  <table>
+    <tr><th style="width:26%">Brief §13 requirement</th><th>Implementation</th></tr>
+    <tr><td class="k">Authentication &amp; RBAC</td><td>JWT (HS256, 8 h, required exp/sub/typ, unique jti); roles ADMIN / OPERATOR / VIEWER enforced per route; tokens of one type
+      (stream vs access) rejected elsewhere; logout and password change revoke tokens server-side; 5 failed logins lock an account for 15 minutes.</td></tr>
+    <tr><td class="k">Input validation &amp; secure API</td><td>Pydantic schemas with length limits on every field, per-protocol URL schemes, coordinates, timestamps with timezone,
+      payload size; semantic checks (camera enabled, skew, age); non-nullable fields protected on update.</td></tr>
+    <tr><td class="k">Stream URLs &amp; credentials</td><td>Credentials encrypted at rest and never serialised; inline credentials rejected; gateway injects them server-side; browsers
+      receive camera-scoped 5-minute tokens verified by the gateway for live, WebRTC and recorded access.</td></tr>
+    <tr><td class="k">HTTPS / TLS</td><td>Caddy terminates TLS with automatic Let's Encrypt certificates in production; one-year HSTS in production.</td></tr>
+    <tr><td class="k">Audit logs</td><td>Logins (success, failure, lockout), logout, onboarding, field-level edits with secrets masked, status changes, stream and recording access,
+      alert handling, watchlist and API-key changes, password resets.</td></tr>
+    <tr><td class="k">Rate limiting</td><td>Redis fixed windows: login per IP, API per user (600 / min), ingest per API key (6,000 / min).</td></tr>
+    <tr><td class="k">No secrets in Git</td><td><code>.env</code> is git-ignored and generated with random values; staged files are scanned against real secret values before commit.</td></tr>
+    <tr><td class="k">Environment configuration</td><td>All settings via environment variables (pydantic-settings); the backend refuses to start in production with a default JWT secret.</td></tr>
+    <tr><td class="k">Supply chain</td><td>Pinned dependencies; <code>pip-audit</code> and <code>npm audit</code> report 0 known vulnerabilities; CI builds every image.</td></tr>
+  </table>
+  <p class="small">Verification: 38 automated tests include lockout, server-side logout, forged and wrong-type tokens, seven SSRF payloads (Redis, MySQL,
+    localhost, IPv6 loopback, cloud metadata), scope validation and security headers; live checks confirmed that requests without, or with another
+    camera's, stream token are refused and that internal endpoints are unreachable through the proxy.</p>
+  </div>
+</div>
+
+<!-- ============================== 13. RELIABILITY ============================== -->
+<div class="section">
+  <h2><span class="num">13</span>Reliability &amp; operations</h2>
+  <table>
+    <tr><th style="width:24%">Failure mode</th><th>Protection</th></tr>
+    <tr><td class="k">Process crash</td><td><code>restart: unless-stopped</code> on every container; Docker enabled at boot; health checks on API, MySQL and Redis; the
+      API waits for healthy dependencies before starting.</td></tr>
+    <tr><td class="k">Camera / stream failure</td><td>Probes every 10 s; two-failure hysteresis against flapping; heartbeat-mode devices are DEGRADED when alive but not streaming;
+      gateway paths self-heal after a gateway restart; status changes audited and pushed live.</td></tr>
+    <tr><td class="k">Memory exhaustion</td><td>Per-container memory limits; Redis <code>maxmemory</code> evicting only TTL keys (never the ingest stream); swap on servers.</td></tr>
+    <tr><td class="k">Disk exhaustion</td><td>Docker log rotation (3 × 10 MB); MySQL binary logs off; events pruned after 30 days (alert evidence kept); GPS tracks after
+      48 h; recordings after 6 h; stream lengths capped; weekly image prune.</td></tr>
+    <tr><td class="k">Data loss</td><td>Nightly consistent <code>mysqldump</code> (7 days kept); named volumes; Redis AOF.</td></tr>
+    <tr><td class="k">UI errors</td><td>React error boundary with recovery; WebSocket reconnect with exponential back-off and catch-up refetch.</td></tr>
+    <tr><td class="k">Certificates &amp; patches</td><td>Automatic certificate renewal; unattended security updates on the server.</td></tr>
+  </table>
+  <h3>Observability</h3>
+  <table>
+    <tr><th style="width:24%">Signal</th><th>Detail</th></tr>
+    <tr><td class="k">Health</td><td><code>/api/health</code> (liveness), <code>/api/ready</code> (database + Redis), dashboard service strip (API, DB, Redis, gateway,
+      ingest backlog, ready streams, viewers).</td></tr>
+    <tr><td class="k">Metrics</td><td>Prometheus: <code>netra_events_total{type,result}</code>, <code>netra_alerts_total</code>, <code>netra_ingest_seconds</code>
+      histogram, <code>netra_cameras{status}</code>, <code>netra_ws_connections</code>; gateway metrics on :9998.</td></tr>
+    <tr><td class="k">Logs &amp; audit</td><td>Structured JSON logs with request IDs; business audit trail in the database.</td></tr>
+    <tr><td class="k">SLO targets</td><td>Detection-to-alert p95 &lt; 2 s · camera status freshness &lt; 30 s · ingest error rate &lt; 0.1 %.</td></tr>
+  </table>
+  <h3>Quality</h3>
+  <p>38 backend tests (auth &amp; RBAC, onboarding, validation, idempotency, dedup, exact/fuzzy correlation, cool-down, alert workflow and bulk actions,
+    trace, stats, dashcam telemetry, security, retention); Ruff lint and format; TypeScript strict mode and ESLint; GitHub Actions on every push; Docker
+    image builds in CI.</p>
+</div>
+
+<!-- ============================== 14. SCALABILITY ============================== -->
+<div class="section">
+  <div class="wide">
+  <h2><span class="num">14</span>Scalability to 80,000 cameras</h2>
+  <p class="lead">80,000 cameras × 2 Mbps ≈ 160 Gbps if everything were sent centrally. The design instead keeps video near the camera and moves
+    metadata: an ANPR event is ~0.6 KB, so 4,000 events/s is only ~20 Mbps into the central tier.</p>
+  <div class="figure">
+  <svg viewBox="0 0 1000 300" xmlns="http://www.w3.org/2000/svg">
+    <defs><marker id="z1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#16a34a"/></marker>
+      <marker id="z2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ea580c"/></marker></defs>
+    <rect x="10" y="20" width="260" height="250" rx="10" class="b-event"/>
+    <text x="24" y="44" class="t-title">EDGE · ~4,000 sites</text><text x="24" y="60" class="t-tiny">junction cabinets · police stations · vehicles</text>
+    <g class="t-sub"><text x="24" y="88">• 10–40 cameras per site</text><text x="24" y="108">• On-device ANPR / detection</text><text x="24" y="128">  (Jetson Orin class)</text><text x="24" y="148">• Local recording (7 days)</text><text x="24" y="168">• Store-and-forward buffer,</text><text x="24" y="188">  idempotent batch replay</text><text x="24" y="208">• Dashcams: GPS + events over 4G</text><text x="24" y="228">• Sub-stream for live view</text></g>
+    <rect x="370" y="20" width="260" height="250" rx="10" class="b-video"/>
+    <text x="384" y="44" class="t-title">REGIONAL · 33 districts</text><text x="384" y="60" class="t-tiny">district data hubs</text>
+    <g class="t-sub"><text x="384" y="88">• Video gateway cluster</text><text x="384" y="108">  (on-demand pull, CDN cache)</text><text x="384" y="128">• Regional Kafka / Streams</text><text x="384" y="148">• Warm storage: evidence clips</text><text x="384" y="168">  30–90 days (object store)</text><text x="384" y="188">• GPU pool: face, re-ID,</text><text x="384" y="208">  forensic search</text><text x="384" y="228">• Limits blast radius</text></g>
+    <rect x="730" y="20" width="260" height="250" rx="10" class="b-data"/>
+    <text x="744" y="44" class="t-title">CENTRAL · State DC + DR</text><text x="744" y="60" class="t-tiny">single source of truth</text>
+    <g class="t-sub"><text x="744" y="88">• Stateless API replicas behind LB</text><text x="744" y="108">• Correlation workers</text><text x="744" y="128">• Aurora / MySQL, partitioned,</text><text x="744" y="148">  read replicas</text><text x="744" y="168">• ClickHouse / OpenSearch search</text><text x="744" y="188">• Watchlists · alerts · audit</text><text x="744" y="208">• Cold archive (Glacier / tape)</text><text x="744" y="228">• DR site: RTO 30 min, RPO 5 min</text></g>
+    
+    <path d="M270,110 H366" stroke="#16a34a" stroke-width="2.4" marker-end="url(#z1)"/><text x="318" y="101" text-anchor="middle" class="t-tiny" style="fill:#16a34a">events · mTLS</text>
+    <path d="M270,190 H366" stroke="#ea580c" stroke-width="2.4" marker-end="url(#z2)"/><text x="318" y="181" text-anchor="middle" class="t-tiny" style="fill:#ea580c">video on demand</text>
+    <path d="M630,110 H726" stroke="#16a34a" stroke-width="2.4" marker-end="url(#z1)"/><text x="678" y="101" text-anchor="middle" class="t-tiny" style="fill:#16a34a">~20 Mbps</text>
+    <path d="M630,190 H726" stroke="#ea580c" stroke-width="2.4" marker-end="url(#z2)"/><text x="678" y="181" text-anchor="middle" class="t-tiny" style="fill:#ea580c">clips · viewing</text>
+    <text x="10" y="292" class="t-tiny">The prototype already has these seams: adapters (edge / vendor integration), batch API (store-and-forward), Redis Streams consumer groups (→ Kafka), heartbeat-mode health, on-demand gateway pulls.</text>
+  </svg>
+  <div class="caption">Figure 8 — Central, regional and edge tiers</div>
+  </div>
+  <div class="grid2">
+    <div>
+      <h3 style="margin-top:0">Sizing (assumptions: 30 % ANPR cameras, 10 vehicles/min/camera after edge dedup, peak ×3)</h3>
+      <table>
+        <tr><th style="width:38%">Metric</th><th>Value</th></tr>
+        <tr><td>Average / peak events</td><td>≈ 4,000 / 12,000 per second</td></tr>
+        <tr><td>Rows per day</td><td>≈ 345 million (≈ 200 GB raw)</td></tr>
+        <tr><td>Ingest replicas at peak</td><td>20–40 (batched inserts)</td></tr>
+        <tr><td>Edge accelerators</td><td>~1,800 Orin NX (12–16 streams each) or 600–800 T4-equivalents centrally</td></tr>
+        <tr><td>Central viewing budget</td><td>2,000 sub-streams × 0.5 Mbps ≈ 1 Gbps</td></tr>
+        <tr><td>Continuous recording</td><td>≈ 860 TB/day → kept at the edge; only evidence promoted</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3 style="margin-top:0">Scaling levers</h3>
+      <table>
+        <tr><th>Concern</th><th>Approach</th></tr>
+        <tr><td>API</td><td>Stateless replicas + HPA on CPU and queue lag</td></tr>
+        <tr><td>Ingest</td><td>Kafka partitioned by camera; bulk-insert workers</td></tr>
+        <tr><td>Database</td><td>Monthly partitions, read replicas, regional shards</td></tr>
+        <tr><td>Search</td><td>ClickHouse / OpenSearch fed by the event stream</td></tr>
+        <tr><td>Video</td><td>H.265, sub-streams, on-demand pull, snapshots on 2G/4G</td></tr>
+        <tr><td>Storage</td><td>Hot (edge, 7–15 d) · warm (regional, 30–90 d) · cold (1–7 y)</td></tr>
+        <tr><td>HA / DR</td><td>Multi-AZ DB, RF-3 Kafka, DR site; RTO 30 min, RPO 5 min</td></tr>
+        <tr><td>Security</td><td>mTLS edge, SSO + MFA, Vault, WORM audit, DPDP Act</td></tr>
+      </table>
+    </div>
+  </div>
+  <h3>Indicative cost (state-wide, hybrid model, 2026 list prices)</h3>
+  <table>
+    <tr><th style="width:48%">Item</th><th>Estimate</th></tr>
+    <tr><td>Edge AI boxes (1,800) · district hub servers (33 × 3)</td><td>≈ ₹15 Cr + ₹25 Cr one-time</td></tr>
+    <tr><td>Central compute, warm and cold storage, network, 25–30 FTE operations</td><td>≈ ₹18–22 Cr per year</td></tr>
+    <tr><td><b>Total</b></td><td><b>≈ ₹40 Cr one-time + ₹18–22 Cr/year ≈ ₹2,500 per camera per year</b></td></tr>
+  </table>
+  </div>
+</div>
+
+<!-- ============================== 15. TECH, COST, ROADMAP ============================== -->
+<div class="section">
+  <h2><span class="num">15</span>Technology, cost &amp; roadmap</h2>
+  <table>
+    <tr><th style="width:16%">Layer</th><th style="width:44%">Technology</th><th>Why</th></tr>
+    <tr><td class="k">Backend</td><td>Python 3.12, FastAPI, SQLAlchemy 2 (async), Pydantic v2, Alembic</td><td>okDriver's stack; async I/O for probes and WebSockets; automatic OpenAPI</td></tr>
+    <tr><td class="k">Database</td><td>MySQL 8.4</td><td>RDS / Aurora compatible, as preferred in the brief</td></tr>
+    <tr><td class="k">Real-time</td><td>Redis 7 (Pub/Sub, Streams), WebSocket, WebRTC</td><td>Horizontal fan-out; message channel with consumer groups</td></tr>
+    <tr><td class="k">Video</td><td>MediaMTX, FFmpeg, hls.js</td><td>Production-grade RTSP relay, LL-HLS, WebRTC, recording</td></tr>
+    <tr><td class="k">Frontend</td><td>React 19, TypeScript, Vite, Tailwind CSS, TanStack Query, Leaflet, Recharts</td><td>Operational console, strict typing, live cache</td></tr>
+    <tr><td class="k">Edge &amp; deploy</td><td>Caddy, Docker Compose, GitHub Actions, optional Vercel</td><td>Automatic HTTPS, one-command setup, CI on every push</td></tr>
+    <tr><td class="k">Maps</td><td>OpenStreetMap tiles</td><td>Free with attribution; self-hostable for air-gapped use</td></tr>
+  </table>
+  <p><span class="tag">COST ₹0</span> Every component is free and open source (MIT / BSD / Apache-2.0 / GPL community editions); certificates from Let's
+    Encrypt are free; no paid API key or subscription is required to build, run or deploy the prototype.</p>
+
+  <p class="small">Further detail in the repository: <code>README.md</code>, <code>docs/ARCHITECTURE.md</code>, <code>docs/API.md</code>,
+    <code>docs/SECURITY.md</code>, <code>docs/SCALABILITY.md</code>, <code>docs/DEPLOYMENT.md</code>, <code>docs/DEMO_SCRIPT.md</code>.</p>
+
+  <h3>Known limitations of the prototype</h3>
+  <ul>
+    <li>AI inference and camera feeds are simulated (the brief does not require model training); real models post to the same API.</li>
+    <li>ONVIF discovery probes configured hosts rather than WS-Discovery multicast, which does not cross container networks.</li>
+    <li>Recording is a 6-hour hot tier; warm and cold tiers are designed (section 14) but not implemented.</li>
+    <li>Department-scoped data access is modelled (departments on users and cameras) but not yet enforced per query.</li>
+  </ul>
+
+  <h3>Roadmap</h3>
+  <table>
+    <tr><th style="width:5%">#</th><th style="width:50%">Next step</th><th>Value</th></tr>
+    <tr><td>1</td><td>Real edge inference container (YOLO + OCR on DeepStream)</td><td>Live ANPR from actual footage into the same API / stream</td></tr>
+    <tr><td>2</td><td>Evidence clips promoted to object storage with legal hold</td><td>Chain of custody beyond the 6-hour hot tier</td></tr>
+    <tr><td>3</td><td>SSO (OIDC) + MFA and department-scoped access</td><td>Multi-agency tenancy and stronger identity</td></tr>
+    <tr><td>4</td><td>Kafka + ClickHouse event backbone; partitioned MySQL</td><td>State-scale throughput and months of searchable history</td></tr>
+    <tr><td>5</td><td>PTZ control over ONVIF; cross-camera re-identification</td><td>Operator control and tracking beyond plates</td></tr>
+    <tr><td>6</td><td>End-to-end browser tests (Playwright)</td><td>Regression safety for operator workflows</td></tr>
+  </table>
+
+</div>
+
+</body>
+</html>
