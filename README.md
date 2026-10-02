@@ -14,6 +14,7 @@ Caddy (HTTPS) · Docker Compose · Alembic · pytest · GitHub Actions
 | | |
 |---|---|
 | **Architecture document (PDF, for submission)** | [docs/Netra-Architecture.pdf](docs/Netra-Architecture.pdf) |
+| **Technical handbook (PDF, 63 pages: every component explained)** | [docs/Netra-Technical-Handbook.pdf](docs/Netra-Technical-Handbook.pdf) |
 | Architecture & ER diagram | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 | Scalability & deployment note (80,000 cameras) | [docs/SCALABILITY.md](docs/SCALABILITY.md) |
 | API reference (plus live Swagger at `/api/docs`) | [docs/API.md](docs/API.md) |

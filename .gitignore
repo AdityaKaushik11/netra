@@ -25,3 +25,4 @@ samples/*.mp4
 
 # personal submission notes (not for the repo)
 *.local.md
+docs/handbook/handbook.html

@@ -1,0 +1,1207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Netra — Technical Handbook</title>
+<style>
+{{CSS}}
+  /* handbook additions */
+  .part { page-break-before: always; height: 240mm; display: flex; flex-direction: column; justify-content: center; }
+  .part .pnum { font-size: 11pt; font-weight: 800; letter-spacing: 0.2em; color: var(--cyan); }
+  .part h1 { font-size: 28pt; margin: 2mm 0 4mm; }
+  .part p { font-size: 11pt; color: var(--ink2); max-width: 150mm; }
+  .part ol { font-size: 10.5pt; color: var(--ink2); }
+  .chapter { page-break-before: always; }
+  h2 { margin-top: 0; }
+  h4 { font-size: 10pt; margin: 3mm 0 1mm; color: var(--ink); }
+  .shot { margin: 2mm 0 4mm; page-break-inside: avoid; }
+  .shot img { width: 100%; border: 1px solid var(--line); border-radius: 1.5mm; display: block; }
+  .shot .caption { text-align: left; }
+  .note { border-left: 3px solid var(--cyan); background: var(--cyan-l); padding: 2mm 3mm; margin: 2mm 0 3mm; font-size: 9.4pt; page-break-inside: avoid; }
+  .warn { border-left: 3px solid #f59e0b; background: #fffbeb; padding: 2mm 3mm; margin: 2mm 0 3mm; font-size: 9.4pt; page-break-inside: avoid; }
+  pre { background: #0f172a; color: #e2e8f0; padding: 3mm; border-radius: 1.5mm; font-size: 8.2pt; line-height: 1.45;
+        white-space: pre-wrap; word-break: break-word; page-break-inside: avoid; margin: 2mm 0 3mm; }
+  pre .c { color: #94a3b8; }
+  .steps { counter-reset: s; list-style: none; padding-left: 0; }
+  .steps > li { counter-increment: s; position: relative; padding-left: 9mm; margin-bottom: 2mm; }
+  .steps > li::before { content: counter(s); position: absolute; left: 0; top: 0.2mm; width: 6mm; height: 6mm; border-radius: 50%;
+        background: var(--navy); color: #fff; font-size: 8.5pt; font-weight: 700; text-align: center; line-height: 6mm; }
+  .toc2 { font-size: 9.6pt; }
+  .toc2 .p { font-weight: 800; color: var(--navy); margin-top: 3mm; }
+  .toc2 .c { padding: 0.6mm 0 0.6mm 6mm; border-bottom: 1px dotted var(--line); }
+  .toc2 b { color: var(--cyan); display: inline-block; width: 9mm; }
+  .cols2 { columns: 2; column-gap: 8mm; }
+  .cols2 .toc2-block { break-inside: avoid; }
+  table.compact td { padding: 1mm 2mm; font-size: 8.6pt; }
+  table.api td.mono { overflow-wrap: anywhere; word-break: break-all; }
+</style>
+</head>
+<body>
+
+<!-- ======================================================================= COVER -->
+<div class="cover">
+  <div class="band">
+    <div class="eyebrow">TECHNICAL HANDBOOK · FULL STACK DEVELOPER CHALLENGE</div>
+    <h1>Netra</h1>
+    <div class="sub">A complete, in-depth explanation of the Integrated CCTV Monitoring, Video Analytics and
+      Real-Time Alert Platform — what every part does, how it works internally, and why it was built that way.</div>
+  </div>
+  <div class="meta">
+    <div>Prepared for</div><div><b>okDriver Smart Dashcams Private Limited</b></div>
+    <div>Candidate</div><div><b>Aditya Kaushik</b> · Full Stack Developer (Intern)</div>
+    <div>Source code</div><div class="mono">github.com/AdityaKaushik11/netra</div>
+    <div>Companion</div><div>docs/Netra-Architecture.pdf (24-page architecture summary)</div>
+    <div>Document date</div><div>2 October 2026 · version 1.0</div>
+  </div>
+  <div class="foot">Every value in this handbook (thresholds, limits, ports, table and column names, endpoints) is taken from the
+    source code and configuration in the repository. Screenshots are of the running system.</div>
+</div>
+
+<!-- ======================================================================= CONTENTS -->
+<div class="chapter">
+  <h2>Contents</h2>
+  <div class="cols2">
+    <div class="toc2-block toc2">
+      <div class="p">Part I — The product</div>
+      <div class="c"><b>1</b>What Netra is and the problem it solves</div>
+      <div class="c"><b>2</b>A guided tour of the console</div>
+      <div class="c"><b>3</b>Running the project</div>
+    </div>
+    <div class="toc2-block toc2">
+      <div class="p">Part II — Architecture</div>
+      <div class="c"><b>4</b>System architecture</div>
+      <div class="c"><b>5</b>Repository walkthrough</div>
+      <div class="c"><b>6</b>Runtime: containers, networks, start-up</div>
+    </div>
+    <div class="toc2-block toc2">
+      <div class="p">Part III — Backend in depth</div>
+      <div class="c"><b>7</b>Configuration</div>
+      <div class="c"><b>8</b>Data model, column by column</div>
+      <div class="c"><b>9</b>Identity, roles and sessions</div>
+      <div class="c"><b>10</b>Camera registry and source adapters</div>
+      <div class="c"><b>11</b>Camera health monitoring</div>
+      <div class="c"><b>12</b>Video: live, WebRTC, recording</div>
+      <div class="c"><b>13</b>The ingestion pipeline</div>
+      <div class="c"><b>14</b>Watchlist matching algorithms</div>
+      <div class="c"><b>15</b>Alerts</div>
+      <div class="c"><b>16</b>Search and movement tracing</div>
+      <div class="c"><b>17</b>Real-time delivery</div>
+      <div class="c"><b>18</b>Statistics, metrics and audit</div>
+      <div class="c"><b>19</b>Data retention</div>
+      <div class="c"><b>20</b>API reference</div>
+    </div>
+    <div class="toc2-block toc2">
+      <div class="p">Part IV — Frontend in depth</div>
+      <div class="c"><b>21</b>Frontend architecture</div>
+      <div class="c"><b>22</b>Key components</div>
+      <div class="c"><b>23</b>Pages</div>
+    </div>
+    <div class="toc2-block toc2">
+      <div class="p">Part V — Simulators and infrastructure</div>
+      <div class="c"><b>24</b>The simulated world</div>
+      <div class="c"><b>25</b>Video gateway, proxy and Compose</div>
+    </div>
+    <div class="toc2-block toc2">
+      <div class="p">Part VI — Quality, security, operations</div>
+      <div class="c"><b>26</b>Security model</div>
+      <div class="c"><b>27</b>Testing and CI</div>
+      <div class="c"><b>28</b>Deployment</div>
+      <div class="c"><b>29</b>Scaling to 80,000 cameras</div>
+      <div class="c"><b>30</b>Troubleshooting</div>
+      <div class="c"><b>31</b>Limitations and roadmap</div>
+      <div class="c"><b>32</b>Glossary</div>
+    </div>
+  </div>
+</div>
+
+<!-- ======================================================================= PART I -->
+<div class="part">
+  <div class="pnum">PART I</div>
+  <h1>The product</h1>
+  <p>What the platform is for, what an operator sees and does, and how to run it in one command.</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">1</span>What Netra is and the problem it solves</h2>
+  <p class="lead">A city's CCTV estate is heterogeneous: traffic-police ANPR cameras, RTO checkpoints, PTZ cameras behind ONVIF,
+    an older video-management system that only publishes HLS, a vendor NVR that exposes nothing but a REST API, and — for
+    okDriver — dashcams on moving vehicles. Each speaks a different protocol, has its own console, and none of them knows
+    which vehicles the police are looking for.</p>
+  <p>Netra puts all of them behind one platform. It does five things:</p>
+  <ol class="steps">
+    <li><b>Registers and monitors every camera</b> — whatever its protocol — and knows at all times whether it is Online,
+      Degraded or Offline and why.</li>
+    <li><b>Shows every feed in one console</b> — live (low-latency HLS or sub-second WebRTC) and recorded.</li>
+    <li><b>Receives AI inference results</b> (number-plate reads, faces, objects, dashcam driver-safety events), validates them,
+      removes duplicates and stores them.</li>
+    <li><b>Correlates every detection with a watchlist</b> of stolen or blacklisted vehicles and wanted or missing persons, and
+      raises an alert on every operator's screen in under a second when something matches.</li>
+    <li><b>Reconstructs movement</b> — where a vehicle was seen, in what order, how fast it must have travelled — on a map.</li>
+  </ol>
+  <h3>Who uses it</h3>
+  <table>
+    <tr><th style="width:18%">Role</th><th style="width:30%">Typical person</th><th>What they can do</th></tr>
+    <tr><td class="k">ADMIN</td><td>Platform / control-room administrator</td><td>Everything: onboard and edit cameras, manage users and API keys, read the audit log, plus all operator actions</td></tr>
+    <tr><td class="k">OPERATOR</td><td>Control-room operator on shift</td><td>Acknowledge and resolve alerts, manage the watchlist, probe cameras, export reports, plus all viewer actions</td></tr>
+    <tr><td class="k">VIEWER</td><td>Analyst, supervisor, auditor</td><td>Read-only access to the dashboard, cameras, video, detections, alerts, trace and watchlist</td></tr>
+    <tr><td class="k">API client</td><td>AI engine, edge gateway, dashcam, partner VMS</td><td>Machine identity with explicit scopes: post events, send heartbeats, onboard cameras</td></tr>
+  </table>
+  <h3>A day in the life — the story the system is built around</h3>
+  <p>A white Swift Dzire, <code>GJ01XX0001</code>, is reported stolen; an operator adds it to the watchlist as CRITICAL. At 10:02 an
+    ANPR camera at Paldi Cross Roads reads the plate. Within a second every operator console beeps three times, a red toast shows
+    the plate, camera, time and confidence, and the Paldi marker on the map starts pulsing. The operator opens the alert: the
+    watchlist record (make, colour, FIR number), the detection in plain language, the camera's live feed, a 40-second recorded clip
+    of the moment, and a map showing the operator's position, the car's position, the distance and the drive time. They
+    acknowledge it ("PCR 12 dispatched"). At 10:18 the car passes the Subhash Bridge RTO checkpoint, at 10:41 Vaishnodevi Circle —
+    each sighting updates the trace, which now draws the route across the city. When the vehicle is intercepted the operator
+    resolves the alert with a note; every step is in the audit log.</p>
+  <div class="note"><b>Observed in operation:</b> while this handbook was written the stack had been running continuously for six days on a
+    laptop, had processed more than 90,000 simulated detections, and recovered automatically each time the laptop slept and woke.</div>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">2</span>A guided tour of the console</h2>
+  <p class="lead">Every screen below is a screenshot of the running system with simulated traffic.</p>
+
+  <h3>2.1 Sign in</h3>
+  <div class="shot"><img src="img/01-login.jpg" /><div class="caption">The sign-in page. Username + password; show/hide password, Caps-Lock warning,
+    "remember my username", and a clear message if someone types an e-mail address. Five failed attempts lock the account for 15 minutes.</div></div>
+
+  <h3>2.2 Dashboard — the operator's single screen</h3>
+  <div class="shot"><img src="img/02-dashboard.jpg" /><div class="caption">Dashboard.</div></div>
+  <table>
+    <tr><th style="width:24%">Area</th><th>What it shows and how it stays live</th></tr>
+    <tr><td class="k">KPI strip</td><td>Cameras online / total with degraded and offline counts; open alerts split by severity; detections in the last hour and
+      24 hours; ingest rate (events per minute, 5-minute average); watchlist size and alerts in 24 h; repeat ANPR reads suppressed in 24 h.
+      Re-fetched whenever a real-time message arrives (throttled to once per 1.2 s) and every 30 s.</td></tr>
+    <tr><td class="k">Camera map</td><td>Every camera as a status-coloured dot (green / amber / red / grey); a pulsing red ring when the camera has an open
+      alert; the dashcam as an arrow pointing along its heading with its speed, plus its purple GPS trail. A filter box narrows the map,
+      the grid and the health table. Clicking a camera opens a mini live view.</td></tr>
+    <tr><td class="k">Active alerts</td><td>Newest open alerts with severity colour bar, plate or person reference, category, camera and time; one-click
+      Acknowledge and Trace.</td></tr>
+    <tr><td class="k">Live camera grid</td><td>Four live feeds (fixed cameras plus the dashcam).</td></tr>
+    <tr><td class="k">Recent detections</td><td>Streaming table of detections; a new row flashes as it arrives over the WebSocket; watchlist hits carry a
+      warning icon; repeat reads show "×n"; dashcam ADAS events show their description.</td></tr>
+    <tr><td class="k">Trend &amp; health</td><td>Detections per hour for 24 h (hover for watchlist hits); a service strip (API, database, Redis, gateway,
+      ingest backlog, streams ready, viewers) and every camera's status, reason and last-seen time.</td></tr>
+  </table>
+
+  <h3>2.3 Live wall</h3>
+  <div class="shot"><img src="img/03-live-wall.jpg" /><div class="caption">Live wall: all nine cameras and all five source types in one view — RTSP via the
+    gateway (C001, C002, C006, C007), ONVIF (C003), an existing HLS publisher (C004), vendor-NVR snapshots (C005, C008) and the dashcam
+    (D001, with live speed). The 2× / 3× / 4× buttons change the grid; "WebRTC low latency" switches gateway feeds to sub-second WebRTC.</div></div>
+
+  <h3>2.4 Camera registry and camera detail</h3>
+  <div class="shot"><img src="img/04-cameras.jpg" /><div class="caption">Camera registry: search and filter by status, protocol, department and zone;
+    each row shows source type, health mode, onboarding source, status with reason, last seen and storage policy; locations on the right.</div></div>
+  <div class="shot"><img src="img/05-camera-detail.jpg" /><div class="caption">Camera detail: live view (with optional WebRTC), recorded-footage replay
+    (last 1 / 5 / 15 minutes), health metrics, every metadata field, encrypted-credential indicator, actions (Detections, Probe now, Edit,
+    Disable) and the camera's audit history.</div></div>
+  <div class="shot"><img src="img/06-dashcam-detail.jpg" /><div class="caption">The dashcam D001: live speed, heading and GPS fix age, its 30-minute track on
+    the map, edge health (fps, bitrate, packet loss, firmware) and an audit history that records the moments its heartbeat was lost and restored.</div></div>
+
+  <h3>2.5 Alerts</h3>
+  <div class="shot"><img src="img/07-alerts.jpg" /><div class="caption">Alert queue with tabs (Open / New / Acknowledged / Closed / All), severity filter,
+    match type and confidence, camera, trigger time and hit count. Tick boxes enable bulk acknowledge / resolve.</div></div>
+  <div class="note">The "751" badge is the number of NEW alerts after six days of unattended simulated traffic — nobody was acknowledging them. In a
+    demo the backlog is cleared with the bulk-resolve action (every closure is audited individually).</div>
+  <div class="shot"><img src="img/08-alert-detail.jpg" /><div class="caption">Alert detail: summary strip (plate, category, last seen, confidence, hits,
+    distance and drive time from the operator), the watchlist record, the detection explained in plain language with where the plate was in the
+    frame, a timeline, the camera's live feed and a recorded 40-second evidence clip.</div></div>
+  <div class="shot"><img src="img/09-alert-response-map.jpg" /><div class="caption">Response map inside the alert: the operator's own location (from the
+    browser, falling back to the control room), the wanted vehicle's latest sighting, recent earlier sightings, the distance and estimated drive
+    time, and buttons for live directions and the full movement history. Below: operator note, Acknowledge, Resolve, False positive.</div></div>
+
+  <h3>2.6 Detections, trace, watchlist, audit, API clients</h3>
+  <div class="shot"><img src="img/10-detections.jpg" /><div class="caption">Detection history: every stored event with filters (plate prefix, camera, type,
+    watchlist hits, time range), number of reads per event and the producer. Operators can export the filtered list as CSV.</div></div>
+  <div class="shot"><img src="img/11-trace.jpg" /><div class="caption">Trace of GJ01XX0001: watchlist banner, sightings / cameras / distance, and the
+    chronological history with time between stops, leg distance and implied speed; the numbered route is drawn on the map.</div></div>
+  <div class="shot"><img src="img/12-trace-clone.jpg" /><div class="caption">Cloned-plate detection: GJ01XX2468 seen at Paldi (C001) and then at
+    Gandhinagar CH-0 (C006), 23.9 km apart, two minutes later — about 716 km/h — so the trace flags "Impossible travel — possible
+    cloned/duplicate plate".</div></div>
+  <div class="shot"><img src="img/13-watchlist.jpg" /><div class="caption">Watchlist: vehicles and persons with category, severity, description, case
+    reference, issuing agency, number of alerts raised and when the entity was last seen.</div></div>
+  <div class="shot"><img src="img/14-audit.jpg" /><div class="caption">Audit log (administrators): every security-relevant action with actor, action, entity,
+    readable details and source IP.</div></div>
+  <div class="shot"><img src="img/15-api-clients.jpg" /><div class="caption">API clients: machine identities with scopes, key prefix, creation and last-use
+    time; a new key is shown exactly once.</div></div>
+  <div class="shot"><img src="img/16-swagger.jpg" /><div class="caption">Interactive API documentation (OpenAPI / Swagger UI) at <code>/api/docs</code>.</div></div>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">3</span>Running the project</h2>
+  <h3>3.1 Requirements</h3>
+  <p>Docker Desktop (or Docker Engine with Compose v2), <code>make</code>, <code>openssl</code>, about 4 GB of free RAM. Nothing else is installed on the host —
+    every service runs in a container.</p>
+  <h3>3.2 One command</h3>
+<pre>git clone https://github.com/AdityaKaushik11/netra.git && cd netra
+make up        <span class="c"># generates .env with random secrets, builds the images, starts 7 containers</span>
+open https://localhost:8443</pre>
+  <p><code>make up</code> runs <code>scripts/gen-env.sh</code> first: it copies <code>.env.example</code> to <code>.env</code> and replaces every secret with a
+    random value from <code>openssl rand</code> (database and Redis passwords, JWT secret, Fernet key, gateway secret, the three user passwords,
+    the simulator API key and the simulated devices' credentials), then <code>chmod 600</code>s the file. The first start builds four images and takes a
+    few minutes; after 30–60 seconds all cameras report ONLINE and simulated traffic begins.</p>
+  <h3>3.3 Accounts</h3>
+  <p>Three users are seeded — <code>admin</code>, <code>operator</code>, <code>viewer</code> — with the passwords in <code>.env</code>. Change one at any time
+    (bcrypt-hashed, audited, and every existing session of that user is signed out):</p>
+<pre>docker compose exec backend python -m app.manage set-password admin</pre>
+  <h3>3.4 Demo commands</h3>
+  <table>
+    <tr><th style="width:36%">Command</th><th>What happens</th></tr>
+    <tr><td class="mono">make scenario</td><td>GJ01XX0001 (stolen, CRITICAL) read at C001 → C002 → C005, timestamped like the brief's 10:02 / 10:18 / 10:41 example</td></tr>
+    <tr><td class="mono">make scenario-live</td><td>Same route plus C006, one sighting every 8 s so alerts appear one after another on camera</td></tr>
+    <tr><td class="mono">make clone</td><td>GJ01XX2468 at two cameras 24 km apart two minutes apart → impossible-travel anomaly</td></tr>
+    <tr><td class="mono">make burst</td><td>10 repeat reads of one plate in 3 s → one stored event with repeat count 9</td></tr>
+    <tr><td class="mono">make onboard</td><td>API-based bulk onboarding of cameras C007 and C008 (appear live, no refresh)</td></tr>
+    <tr><td class="mono">scripts/camera.sh down c002</td><td>Stops a camera's stream → C002 turns OFFLINE within ~20 s; <code>up c002</code> restores it</td></tr>
+    <tr><td class="mono">scripts/camera.sh vendor weak</td><td>Vendor NVR reports a weak signal → C005 DEGRADED; <code>offline</code> / <code>online</code> also work</td></tr>
+    <tr><td class="mono">scripts/camera.sh edge pause</td><td>Edge agent stops heartbeats → C006 DEGRADED then OFFLINE; <code>resume</code> restores</td></tr>
+    <tr><td class="mono">scripts/camera.sh dashcam pause</td><td>Dashcam loses 4G → D001 DEGRADED then OFFLINE</td></tr>
+    <tr><td class="mono">make logs · make ps · make down · make reset</td><td>Follow logs · list containers · stop · stop and delete all data</td></tr>
+    <tr><td class="mono">make test · make lint</td><td>Backend test suite · all linters and type checks</td></tr>
+  </table>
+</div>
+
+<!-- ======================================================================= PART II -->
+<div class="part">
+  <div class="pnum">PART II</div>
+  <h1>Architecture</h1>
+  <p>The shape of the system: the components, how they connect, and how the code is organised.</p>
+</div>
+
+<div class="chapter wide">
+  <h2><span class="num">4</span>System architecture</h2>
+  <p class="lead">Sources on the left, the platform in the middle, operators on the right. Video, API/data, AI events and control traffic travel on separate,
+    explicitly authorised paths.</p>
+  <div class="figure">{{SVG:Figure 1}}<div class="caption">Figure 1 — System architecture</div></div>
+</div>
+
+<div class="chapter">
+  <h3 style="margin-top:0">4.1 How to read Figure 1</h3>
+  <ul>
+    <li><b>Video</b> (orange) never passes through the API. The video gateway pulls each camera's RTSP stream on the private camera network and serves it to
+      browsers through the HTTPS proxy. The API only <i>authorises</i> each viewer and tells the gateway which cameras exist.</li>
+    <li><b>Data</b> (blue) is the REST API and the WebSocket between the console and the API, and the API's connections to MySQL and Redis.</li>
+    <li><b>Events</b> (green) are AI inference results and heartbeats arriving from the edge — through REST or through a Redis Stream.</li>
+    <li><b>Control</b> (dashed) is the API probing cameras (manifest fetches, ONVIF SOAP, vendor REST) and the gateway asking the API
+      "may this viewer watch this camera?".</li>
+  </ul>
+  <h3>4.2 Five architectural decisions</h3>
+  <table>
+    <tr><th style="width:24%">Decision</th><th style="width:40%">Why</th><th>Consequence</th></tr>
+    <tr><td class="k">A dedicated video gateway</td><td>Browsers cannot play RTSP; cameras must not be exposed; credentials must stay server-side</td>
+      <td>One component converts RTSP to LL-HLS/WebRTC, records, and serves clips; the API stays lightweight</td></tr>
+    <tr><td class="k">Adapters per source type</td><td>Heterogeneous cameras are the core problem</td><td>Registry, health, playback and analytics never branch on vendor</td></tr>
+    <tr><td class="k">Redis for real-time and dedup</td><td>The API must scale horizontally; dedup and rate limits must hold across replicas</td>
+      <td>Any replica serves any WebSocket; guarantees are global, not per process</td></tr>
+    <tr><td class="k">MySQL as system of record</td><td>okDriver's stack; RDS-compatible; strong indexing for the query paths</td><td>Alembic migrations; UTC timestamps; portable schema</td></tr>
+    <tr><td class="k">Edge proxy in front of everything</td><td>One origin for the browser; TLS; security headers; route blocking</td><td>Caddy is the only exposed component</td></tr>
+  </table>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">5</span>Repository walkthrough</h2>
+  <p class="lead">Where everything lives. The repository has four deployable units (backend, frontend, simulator, infrastructure) plus documentation and scripts.</p>
+  <table class="compact">
+    <tr><th style="width:38%">Path</th><th>Purpose</th></tr>
+    <tr><td class="mono">backend/app/main.py</td><td>FastAPI application factory: middleware (request id, security headers, CORS, error handler), routers, lifespan that starts the background tasks</td></tr>
+    <tr><td class="mono">backend/app/core/config.py</td><td>Every setting, read from environment variables (chapter 7)</td></tr>
+    <tr><td class="mono">backend/app/core/security.py</td><td>bcrypt passwords, JWT access and stream tokens, API-key hashing, Fernet encryption</td></tr>
+    <tr><td class="mono">backend/app/core/netguard.py · logging.py · db.py</td><td>SSRF guard for every outbound connection to a camera · structured JSON logs · async SQLAlchemy engine and sessions</td></tr>
+    <tr><td class="mono">backend/app/models/</td><td><code>entities.py</code> (9 tables), <code>enums.py</code> (roles, statuses, event types…), <code>types.py</code> (UTC datetime type, BIGINT ids)</td></tr>
+    <tr><td class="mono">backend/app/schemas/</td><td>Pydantic request/response models with validation: auth, camera, event, alert/watchlist</td></tr>
+    <tr><td class="mono">backend/app/api/deps.py</td><td>Authentication and authorisation dependencies (users, roles, API keys, scopes, rate limits)</td></tr>
+    <tr><td class="mono">backend/app/api/routes/</td><td><code>auth</code>, <code>cameras</code>, <code>events</code> (+ search, trace), <code>alerts</code>, <code>watchlist</code>, <code>system</code> (stats, audit, health, metrics, WebSocket)</td></tr>
+    <tr><td class="mono">backend/app/adapters/</td><td><code>base.py</code> (interface), <code>rtsp.py</code>, <code>onvif.py</code>, <code>http_sources.py</code> (HLS, vendor API)</td></tr>
+    <tr><td class="mono">backend/app/services/</td><td><code>ingestion</code>, <code>watchlist_matcher</code>, <code>dedup</code>, <code>event_bus</code>, <code>stream_consumer</code>, <code>health_monitor</code>,
+      <code>gateway</code>, <code>sessions</code>, <code>ratelimit</code>, <code>audit</code>, <code>serializers</code>, <code>redis_client</code></td></tr>
+    <tr><td class="mono">backend/app/seed.py · manage.py</td><td>Idempotent bootstrap data · operational commands (password reset)</td></tr>
+    <tr><td class="mono">backend/alembic/</td><td>Database migrations (initial schema; dashcam telemetry)</td></tr>
+    <tr><td class="mono">backend/tests/</td><td>38 automated tests (chapter 27)</td></tr>
+    <tr><td class="mono">frontend/src/api/</td><td>Fetch wrapper with auth (<code>client.ts</code>) and all TypeScript types (<code>types.ts</code>)</td></tr>
+    <tr><td class="mono">frontend/src/hooks/</td><td><code>auth</code> (session), <code>realtime</code> (WebSocket and cache updates), <code>location</code> (operator geolocation)</td></tr>
+    <tr><td class="mono">frontend/src/components/</td><td>Layout, maps, video player, alert detail, forms, badges, error boundary (chapter 22)</td></tr>
+    <tr><td class="mono">frontend/src/pages/</td><td>One file per screen (chapter 23)</td></tr>
+    <tr><td class="mono">simulator/sim/</td><td>ONVIF device, vendor NVR, AI analytics engine, edge agent, dashcam, scenarios (chapter 24)</td></tr>
+    <tr><td class="mono">infra/camsim/</td><td>Simulated IP cameras: MediaMTX + FFmpeg scenes</td></tr>
+    <tr><td class="mono">infra/gateway · infra/caddy · infra/prometheus</td><td>Video gateway configuration · HTTPS edge proxy (routes, headers, CSP, limits) · optional metrics</td></tr>
+    <tr><td class="mono">docker-compose.yml · docker-compose.prod.yml</td><td>The stack · production overrides</td></tr>
+    <tr><td class="mono">scripts/</td><td><code>gen-env.sh</code>, <code>camera.sh</code>, <code>deploy-vm.sh</code>, <code>backup.sh</code>, <code>configure-vercel.sh</code></td></tr>
+    <tr><td class="mono">docs/ · .github/workflows/</td><td>Architecture PDF, this handbook, API, security, scalability, deployment, demo script, requirements traceability · CI on every push</td></tr>
+  </table>
+</div>
+
+<div class="chapter wide">
+  <h2><span class="num">6</span>Runtime: containers, networks, start-up</h2>
+  <div class="figure">{{SVG:Figure 2}}<div class="caption">Figure 2 — Containers, networks and published ports</div></div>
+</div>
+
+<div class="chapter">
+  <h3 style="margin-top:0">6.1 The seven containers (eight with optional Prometheus)</h3>
+  <table>
+    <tr><th style="width:15%">Container</th><th style="width:22%">Image</th><th>Role</th></tr>
+    <tr><td class="k">mysql</td><td class="mono">mysql:8.4</td><td>System of record; binary logs off, 256 MB buffer pool, 200 connections, data in a named volume</td></tr>
+    <tr><td class="k">redis</td><td class="mono">redis:7.4-alpine</td><td>Password-protected; append-only persistence; 256 MB cap evicting only keys with a TTL</td></tr>
+    <tr><td class="k">backend</td><td>built from <code>backend/</code></td><td>API + background tasks; runs migrations and seed at start; non-root user</td></tr>
+    <tr><td class="k">gateway</td><td class="mono">bluenviron/mediamtx:1</td><td>Video gateway; recordings in a named volume</td></tr>
+    <tr><td class="k">camsim</td><td>built from <code>infra/camsim/</code></td><td>Five simulated RTSP cameras that require credentials</td></tr>
+    <tr><td class="k">simulator</td><td>built from <code>simulator/</code></td><td>ONVIF device, vendor NVR, AI engine, edge agent, dashcam; non-root user</td></tr>
+    <tr><td class="k">web</td><td>built from <code>frontend/</code></td><td>Caddy serving the built React console and proxying the API and video</td></tr>
+  </table>
+  <h3>6.2 Start-up sequence</h3>
+  <ol class="steps">
+    <li>MySQL and Redis start; Compose waits until their health checks pass.</li>
+    <li>The backend container's entrypoint runs <code>alembic upgrade head</code> (creates or migrates the schema), then <code>python -m app.seed</code>
+      (idempotent: only creates what is missing), then starts uvicorn.</li>
+    <li>The FastAPI <i>lifespan</i> starts four background tasks in the same process: the real-time subscriber (Redis Pub/Sub → WebSockets), the Redis
+      Stream consumer, the health monitor, and a one-off gateway reconciliation that re-registers every enabled RTSP/ONVIF camera with the gateway.</li>
+    <li>The gateway starts with no camera paths; the reconciliation registers them through its control API, authenticated with the gateway secret.</li>
+    <li>The simulator waits for a healthy backend, then starts its servers and traffic; the dashcam starts driving.</li>
+    <li>Within one or two health cycles (10 s each) every camera has a status.</li>
+  </ol>
+  <h3>6.3 Least privilege and limits</h3>
+  <p>Every container: <code>restart: unless-stopped</code>, <code>no-new-privileges</code>, a memory limit (MySQL 1 GB, backend 768 MB, camsim 768 MB, gateway
+    512 MB, simulator 384 MB, Redis 320 MB, web 256 MB) and rotated logs (3 × 10 MB). Application containers drop all Linux capabilities; the web container
+    keeps only <code>NET_BIND_SERVICE</code> to bind port 443. Locally all ports bind to 127.0.0.1.</p>
+</div>
+
+<!-- ======================================================================= PART III -->
+<div class="part">
+  <div class="pnum">PART III</div>
+  <h1>Backend in depth</h1>
+  <p>How each part of the FastAPI service works — configuration, data, security, cameras, health, video, ingestion, matching, alerts, tracing,
+    real-time delivery, statistics, retention and the complete API.</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">7</span>Configuration</h2>
+  <p class="lead">All configuration comes from environment variables (<code>pydantic-settings</code>); nothing secret is in the code. Defaults below are
+    the code defaults; Compose overrides some for the containerised stack.</p>
+  <table>
+    <tr><th style="width:34%">Setting (env var)</th><th style="width:20%">Default</th><th>Meaning</th></tr>
+    <tr><td class="mono">DATABASE_URL</td><td class="mono">sqlite (dev)</td><td>Compose sets <code>mysql+aiomysql://netra:…@mysql:3306/netra</code></td></tr>
+    <tr><td class="mono">REDIS_URL</td><td>empty</td><td>Empty = in-process fallbacks (tests, single node)</td></tr>
+    <tr><td class="mono">JWT_SECRET</td><td>dev value</td><td>Signs tokens and keys API-key hashes; refused in production if left at default</td></tr>
+    <tr><td class="mono">ACCESS_TOKEN_MINUTES · STREAM_TOKEN_SECONDS</td><td>480 · 300</td><td>Session length · camera stream token lifetime</td></tr>
+    <tr><td class="mono">CREDENTIALS_KEY</td><td>derived (dev)</td><td>Fernet key that encrypts camera credentials</td></tr>
+    <tr><td class="mono">RATE_LIMIT_LOGIN / API / INGEST_PER_MIN</td><td>10 · 600 · 6000</td><td>Per IP · per user · per API key (production: login 60)</td></tr>
+    <tr><td class="mono">GATEWAY_API_URL · GATEWAY_API_SECRET</td><td>gateway:9997 · —</td><td>Gateway control API and the backend's credential for it</td></tr>
+    <tr><td class="mono">GATEWAY_PUBLIC_HLS_BASE · …PLAYBACK_BASE</td><td>/media · /playback</td><td>URL prefixes handed to browsers</td></tr>
+    <tr><td class="mono">STREAM_ON_DEMAND</td><td>false</td><td>Pull a camera only while someone watches (bandwidth saving)</td></tr>
+    <tr><td class="mono">HEALTH_INTERVAL_SECONDS</td><td>10</td><td>Health-monitor cycle</td></tr>
+    <tr><td class="mono">HEARTBEAT_DEGRADED_AFTER_S · …OFFLINE…</td><td>30 · 90</td><td>Heartbeat age thresholds</td></tr>
+    <tr><td class="mono">PROBE_TIMEOUT_S · PROBE_SLOW_THRESHOLD_S</td><td>3 · 1.5</td><td>Probe timeout; slower HLS manifest = DEGRADED (Compose: 6 · 3)</td></tr>
+    <tr><td class="mono">DEDUP_WINDOW_SECONDS</td><td>60</td><td>Repeat reads of the same identity at the same camera are folded</td></tr>
+    <tr><td class="mono">ALERT_COOLDOWN_SECONDS</td><td>300</td><td>Open alert for the same entity + camera is updated instead of re-raised</td></tr>
+    <tr><td class="mono">MIN_MATCH_CONFIDENCE · FUZZY_MATCH_ENABLED</td><td>0.60 · true</td><td>Correlation thresholds</td></tr>
+    <tr><td class="mono">MAX_EVENT_AGE_HOURS · MAX_FUTURE_SKEW_SECONDS</td><td>72 · 300</td><td>Accepted timestamp window</td></tr>
+    <tr><td class="mono">STREAM_INGEST_ENABLED · STREAM_INGEST_KEY</td><td>true · netra:ingest:detections</td><td>Redis Stream message channel</td></tr>
+    <tr><td class="mono">EVENT_RETENTION_DAYS · POSITION_RETENTION_HOURS</td><td>30 · 48</td><td>Data retention</td></tr>
+    <tr><td class="mono">BLOCKED_ENDPOINT_HOSTS</td><td>platform services</td><td>Hosts that may never be used as camera endpoints</td></tr>
+    <tr><td class="mono">ONVIF_DISCOVERY_HOSTS</td><td>empty</td><td>ONVIF device URLs probed by discovery</td></tr>
+    <tr><td class="mono">API_DOCS_ENABLED · ENVIRONMENT</td><td>true · development</td><td>Swagger on/off · production safety checks</td></tr>
+  </table>
+  <p>Compose-level variables (in <code>.env</code>): <code>HTTPS_PORT</code>, <code>BIND_ADDRESS</code>, <code>SITE_ADDRESS</code>, <code>TLS_MODE</code>,
+    <code>HSTS_MAX_AGE</code>, <code>EXTERNAL_MEDIA_ORIGINS</code>, <code>PUBLIC_IP</code>, the data-store passwords, the three user passwords, the simulator API key,
+    the simulated devices' credentials, and simulator traffic settings (<code>INGEST_MODE</code>, <code>SIM_EVENTS_PER_MIN</code>, <code>PUBLIC_HLS_URL</code>).</p>
+</div>
+
+<div class="chapter wide">
+  <h2><span class="num">8</span>Data model, column by column</h2>
+  <div class="figure">{{SVG:Figure 6}}<div class="caption">Figure 3 — Entity-relationship diagram (9 tables)</div></div>
+</div>
+
+<div class="chapter">
+  <h3 style="margin-top:0">8.1 Conventions</h3>
+  <ul>
+    <li><b>Timestamps</b> are stored as UTC <code>DATETIME(6)</code> (microseconds) by a custom <code>UTCDateTime</code> type that always returns
+      timezone-aware values, so no code ever compares naive and aware datetimes.</li>
+    <li><b>Enums</b> are stored as short strings (not native MySQL ENUMs), so adding a value needs no table rebuild.</li>
+    <li><b>High-volume ids</b> (events, audit, GPS points) are BIGINT; camera ids are human-readable strings (<code>C001</code>, <code>D001</code>).</li>
+    <li><b>Nothing important is hard-deleted</b>: cameras are disabled, watchlist entries deactivated; audit logs and alert evidence are kept.</li>
+  </ul>
+  <h3>8.2 cameras</h3>
+  <table>
+    <tr><th style="width:30%">Column</th><th>Meaning</th></tr>
+    <tr><td class="mono">id</td><td>Camera id, e.g. C001; must match <code>^[A-Z0-9][A-Z0-9_-]{1,31}$</code></td></tr>
+    <tr><td class="mono">name, zone, address, department_id</td><td>Descriptive and organisational metadata</td></tr>
+    <tr><td class="mono">latitude, longitude</td><td>Location; for a dashcam, the latest GPS fix</td></tr>
+    <tr><td class="mono">camera_type</td><td>FIXED, PTZ, ANPR, DOME, BULLET, THERMAL or DASHCAM</td></tr>
+    <tr><td class="mono">source_protocol</td><td>RTSP, ONVIF, HLS or VENDOR_API — selects the adapter</td></tr>
+    <tr><td class="mono">stream_endpoint</td><td>Endpoint reference <i>without</i> credentials (rtsp://…, ONVIF device-service URL, manifest URL or vendor API base)</td></tr>
+    <tr><td class="mono">stream_username, stream_secret_enc</td><td>Username in clear; password or vendor API key Fernet-encrypted; never returned by the API</td></tr>
+    <tr><td class="mono">resolved_stream_uri, gateway_path</td><td>RTSP URI discovered via ONVIF; the gateway path name (<code>cam-c001</code>)</td></tr>
+    <tr><td class="mono">vendor, model, resolution, fps</td><td>Device metadata</td></tr>
+    <tr><td class="mono">recording_enabled, storage_tier, storage_location, retention_days</td><td>Storage metadata; recording is applied on the gateway</td></tr>
+    <tr><td class="mono">health_mode</td><td>PROBE (platform probes the source) or HEARTBEAT (an edge device reports)</td></tr>
+    <tr><td class="mono">status, status_reason, status_changed_at</td><td>ONLINE / DEGRADED / OFFLINE / UNKNOWN, a human-readable reason and when it changed</td></tr>
+    <tr><td class="mono">last_heartbeat_at, health_metrics</td><td>Last successful probe or heartbeat; metrics such as bitrate, fps, packet loss, temperature</td></tr>
+    <tr><td class="mono">speed_kmh, heading_deg, location_updated_at</td><td>Dashcam telemetry</td></tr>
+    <tr><td class="mono">is_enabled, onboarding_source, tags</td><td>Disabled cameras keep their history; MANUAL / API / DISCOVERY / SEED</td></tr>
+  </table>
+  <h3>8.3 detection_events</h3>
+  <table>
+    <tr><th style="width:30%">Column</th><th>Meaning</th></tr>
+    <tr><td class="mono">event_uid</td><td>Unique idempotency key — the producer's <code>event_id</code>, or a generated UUID</td></tr>
+    <tr><td class="mono">camera_id, event_type</td><td>Source camera; ANPR, VEHICLE/PERSON/OBJECT_DETECTION, FACE_RECOGNITION, OVERSPEED, HARSH_BRAKING, COLLISION_WARNING, DRIVER_DROWSINESS</td></tr>
+    <tr><td class="mono">detected_at, received_at</td><td>When the AI saw it (producer clock) and when the platform received it</td></tr>
+    <tr><td class="mono">identifier, identifier_normalized</td><td>Plate or person reference as read, and upper-case alphanumerics only (used for matching and search)</td></tr>
+    <tr><td class="mono">vehicle_type, vehicle_color, object_label</td><td>Enrichment from the model; ADAS descriptions live in <code>object_label</code></td></tr>
+    <tr><td class="mono">confidence, bounding_box</td><td>0–1 confidence; x, y, w, h of the detection in the frame</td></tr>
+    <tr><td class="mono">snapshot_url, model_name, source_client, attributes</td><td>Evidence link, model identity, which API client sent it, extra JSON (e.g. speed, plate-format flag)</td></tr>
+    <tr><td class="mono">latitude, longitude</td><td>Snapshot of the location at detection time — the camera's, or the dashcam's GPS fix</td></tr>
+    <tr><td class="mono">repeat_count, last_seen_at</td><td>Repeat reads folded into this event by the dedup window</td></tr>
+    <tr><td class="mono">watchlist_hit</td><td>True if this event raised or updated an alert</td></tr>
+  </table>
+  <h3>8.4 alerts</h3>
+  <table>
+    <tr><th style="width:30%">Column</th><th>Meaning</th></tr>
+    <tr><td class="mono">event_id, watchlist_entry_id, camera_id</td><td>What was seen, what it matched, where</td></tr>
+    <tr><td class="mono">identifier, identifier_normalized</td><td>As read by the camera (for fuzzy matches this differs from the watchlist identifier)</td></tr>
+    <tr><td class="mono">match_type, confidence, severity, title</td><td>EXACT or FUZZY; highest confidence seen; LOW–CRITICAL; human title</td></tr>
+    <tr><td class="mono">status</td><td>NEW → ACKNOWLEDGED → RESOLVED or FALSE_POSITIVE</td></tr>
+    <tr><td class="mono">latitude, longitude, triggered_at</td><td>Where and when the alert was raised</td></tr>
+    <tr><td class="mono">hit_count, last_hit_at</td><td>Further sightings at the same camera within the cool-down</td></tr>
+    <tr><td class="mono">acknowledged_by/at, resolved_by/at, resolution_note</td><td>Who handled it, when, and the operator's note</td></tr>
+  </table>
+  <h3>8.5 Other tables</h3>
+  <table>
+    <tr><th style="width:22%">Table</th><th>Columns and purpose</th></tr>
+    <tr><td class="mono">watchlist_entries</td><td>entity_type (VEHICLE/PERSON), identifier + normalised (unique per type), category (STOLEN_VEHICLE, BLACKLISTED_VEHICLE, WANTED_PERSON,
+      MISSING_PERSON, SUSPICIOUS), severity, description, attributes (make, colour, model, age…), case_reference, source_agency, is_active, valid_until, created_by</td></tr>
+    <tr><td class="mono">users</td><td>username (unique), full_name, bcrypt password_hash, role, department, is_active, last_login_at</td></tr>
+    <tr><td class="mono">api_clients</td><td>name, key_prefix (first 10 characters, for recognition), key_hash (HMAC-SHA256), scopes, is_active, last_used_at</td></tr>
+    <tr><td class="mono">departments</td><td>code and name (AHM-TRF, AHM-CITY, RTO-GJ, GNR-POL in the seed)</td></tr>
+    <tr><td class="mono">camera_positions</td><td>Dashcam GPS track: camera_id, recorded_at, latitude, longitude, speed, heading</td></tr>
+    <tr><td class="mono">audit_logs</td><td>created_at, actor_type (USER / API_CLIENT / SYSTEM), actor id and name, action, entity type and id, JSON details, IP address</td></tr>
+  </table>
+  <p>Every index exists for a specific query path; the complete list is in the architecture PDF (section 10). Migrations: <code>initial schema</code> and
+    <code>dashcam telemetry</code> (adds the speed/heading columns and the <code>camera_positions</code> table).</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">9</span>Identity, roles and sessions</h2>
+  <h3>9.1 Signing in</h3>
+  <ol class="steps">
+    <li><code>POST /auth/login {username, password}</code>. The username is trimmed and lower-cased.</li>
+    <li>Rate limit: at most 10 attempts per minute per client IP (Redis fixed window).</li>
+    <li>If the username has 5 or more recent failures, answer <code>429</code> "locked for 15 minutes" and audit <code>LOGIN_LOCKED</code>.</li>
+    <li>Look up the user and verify the bcrypt hash. If the user does not exist, a dummy hash is checked anyway so the response time does not reveal
+      whether a username exists.</li>
+    <li>On failure: increment the failure counter (expires 15 minutes after the last failure), audit <code>LOGIN_FAILED</code>, answer 401.</li>
+    <li>On success: clear the counter, record <code>last_login_at</code>, audit <code>LOGIN_SUCCESS</code>, and return a JWT plus the user profile.</li>
+  </ol>
+  <h3>9.2 Tokens</h3>
+  <table>
+    <tr><th style="width:18%">Token</th><th style="width:34%">Claims</th><th>Use</th></tr>
+    <tr><td class="k">Access</td><td><code>sub</code> (user id), <code>role</code>, <code>typ=access</code>, <code>iat</code>, <code>exp</code> (+8 h), <code>jti</code> (unique id)</td>
+      <td>Sent as <code>Authorization: Bearer</code> on every API call and as <code>?token=</code> when opening the WebSocket</td></tr>
+    <tr><td class="k">Stream</td><td><code>sub</code>, <code>cam</code> (one camera), <code>typ=stream</code>, <code>exp</code> (+5 min)</td>
+      <td>Appended to video URLs; verified by the gateway through the backend for every request</td></tr>
+  </table>
+  <p>Tokens are HS256 with <code>exp</code>, <code>sub</code> and <code>typ</code> required. A token of the wrong type is rejected, so a stream token can never be used
+    as a session. On every request the backend also checks revocation: <code>POST /auth/logout</code> stores the token's <code>jti</code> in Redis until it would
+    have expired; a password reset stores a "revoked before" timestamp for the user, invalidating every older token. The browser keeps the token in
+    <code>sessionStorage</code> (cleared when the tab closes).</p>
+  <h3>9.3 Machine identities (API keys)</h3>
+  <p>Administrators issue keys for AI engines, edge agents and dashcams (<code>POST /api-clients</code>). A key is <code>ntr_</code> + 32 random bytes, shown once;
+    only its HMAC-SHA256 is stored, keyed with the server secret. Each key has explicit scopes:</p>
+  <table>
+    <tr><th style="width:26%">Scope</th><th>Allows</th></tr>
+    <tr><td class="mono">events:write</td><td><code>POST /events</code>, <code>POST /events/batch</code></td></tr>
+    <tr><td class="mono">cameras:heartbeat</td><td><code>POST /cameras/{id}/heartbeat</code> (including GPS)</td></tr>
+    <tr><td class="mono">cameras:write</td><td><code>POST /cameras</code>, <code>POST /cameras/bulk</code> (API-based onboarding)</td></tr>
+  </table>
+  <p>Machine requests are rate-limited per key (6,000 per minute); <code>last_used_at</code> is updated at most once a minute to avoid a database write per event.</p>
+  <h3>9.4 Who can do what</h3>
+  <table>
+    <tr><th style="width:44%">Action</th><th>Viewer</th><th>Operator</th><th>Admin</th><th>API key</th></tr>
+    <tr><td>See dashboard, cameras, video, detections, alerts, trace, watchlist</td><td>✓</td><td>✓</td><td>✓</td><td>—</td></tr>
+    <tr><td>Acknowledge / resolve alerts (single and bulk)</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+    <tr><td>Add / edit / deactivate watchlist entries</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+    <tr><td>Probe a camera now · export detections CSV</td><td>—</td><td>✓</td><td>✓</td><td>—</td></tr>
+    <tr><td>Onboard, edit, enable / disable cameras · ONVIF discovery</td><td>—</td><td>—</td><td>✓</td><td>cameras:write (create)</td></tr>
+    <tr><td>Users, API keys, audit log</td><td>—</td><td>—</td><td>✓</td><td>—</td></tr>
+    <tr><td>Post detection events</td><td>—</td><td>—</td><td>✓</td><td>events:write</td></tr>
+    <tr><td>Send heartbeats / GPS</td><td>—</td><td>—</td><td>✓</td><td>cameras:heartbeat</td></tr>
+  </table>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">10</span>Camera registry and source adapters</h2>
+  <h3>10.1 Onboarding a camera</h3>
+  <ol class="steps">
+    <li><b>Validation.</b> Lengths, coordinate ranges, resolution format, storage tier, and three endpoint rules: it must be an absolute URL; it must not
+      contain inline credentials (<code>rtsp://user:pass@…</code> is refused — credentials go in separate fields); its scheme must match the protocol (RTSP →
+      <code>rtsp/rtsps</code>, the others → <code>http/https</code>). The SSRF guard refuses platform services, loopback and link-local addresses.</li>
+    <li><b>Encryption.</b> The password or vendor API key is Fernet-encrypted into <code>stream_secret_enc</code>.</li>
+    <li><b>Adapter prepare.</b> The camera's adapter makes it usable: RTSP registers a gateway path; ONVIF first resolves the stream URI over SOAP.</li>
+    <li><b>Audit and broadcast.</b> <code>CAMERA_ONBOARDED</code> is recorded; <code>camera.created</code> is pushed to every console; a health probe is scheduled immediately.</li>
+  </ol>
+  <p>Three ways in: the console form (admin), <code>POST /cameras</code> or <code>POST /cameras/bulk</code> with an API key (up to 500 cameras per call; each one
+    succeeds or fails on its own inside a savepoint), and ONVIF discovery, which pre-fills the form. Editing applies the same rules, refuses
+    <code>null</code> for required fields, records a field-level diff (passwords shown as "rotated"), and re-prepares the camera when its endpoint, credentials or
+    recording flag change. Disabling tears down the gateway path and marks the camera OFFLINE "disabled by administrator".</p>
+  <h3>10.2 The adapter interface</h3>
+<pre>class CameraAdapter:
+    async def prepare(camera)            <span class="c"># on onboarding/edit: register with gateway, resolve URIs</span>
+    async def teardown(camera)           <span class="c"># on disable</span>
+    async def probe(camera) -> ProbeResult    <span class="c"># status + reason + metrics</span>
+    def playback(camera, token, exp) -> PlaybackInfo   <span class="c"># how a browser renders it (never credentials)</span></pre>
+  <table>
+    <tr><th style="width:13%">Adapter</th><th style="width:29%">prepare</th><th style="width:31%">probe</th><th>playback</th></tr>
+    <tr><td class="k">RTSP</td><td>Builds the source URL with decrypted credentials and registers gateway path <code>cam-&lt;id&gt;</code> (recording on/off)</td>
+      <td>Reads the gateway path state (section 11.3); re-registers it if the gateway lost it</td><td>LL-HLS URL + WebRTC (WHEP) URL + stream token</td></tr>
+    <tr><td class="k">ONVIF</td><td>SOAP <code>GetProfiles</code> → <code>GetStreamUri</code>; stores the URI; registers the gateway path with the same credentials</td>
+      <td><code>GetDeviceInformation</code> (device alive?) then the gateway path state</td><td>As RTSP</td></tr>
+    <tr><td class="k">HLS</td><td>—</td><td>Fetches the manifest (SSRF-checked, ≤ 3 checked redirects)</td><td>The manifest URL itself, no token (external origin)</td></tr>
+    <tr><td class="k">Vendor API</td><td>—</td><td><code>GET {base}/status</code> with <code>X-Api-Key</code></td><td>Snapshot URL on the backend + stream token</td></tr>
+  </table>
+  <h3>10.3 ONVIF in detail</h3>
+  <p>ONVIF devices speak SOAP 1.2 over HTTP and authenticate with WS-Security <i>UsernameToken</i> digests. For each request the client generates a 16-byte
+    random nonce and a UTC timestamp and sends:</p>
+<pre>PasswordDigest = Base64( SHA-1( nonce + created + password ) )</pre>
+  <p>so the password itself never crosses the network. Usernames and profile tokens are XML-escaped; responses are parsed with <code>defusedxml</code>
+    (immune to XML entity attacks). Discovery (<code>POST /onvif/discover</code> with credentials in the body) probes each configured device URL, returns
+    manufacturer, model, firmware, serial and stream URI, and marks devices already registered. Multicast WS-Discovery is not used because it does not
+    cross container or VLAN boundaries; in production discovery would run on an edge gateway.</p>
+  <h3>10.4 Vendor NVR snapshots</h3>
+  <p>Browsers cannot send an <code>Authorization</code> header from an <code>&lt;img&gt;</code> tag, so vendor cameras are viewed through
+    <code>GET /cameras/{id}/snapshot?token=…</code>. The backend checks that the stream token is valid and scoped to that camera, fetches
+    <code>{base}/snapshot.jpg</code> with the vendor key, and relays the bytes only if the response really is an image under 5 MB. The console refreshes the image
+    once per second — a near-live, low-bandwidth (≈ 50–80 kbps) mode suited to cameras on weak links.</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">11</span>Camera health monitoring</h2>
+  <h3>11.1 The loop</h3>
+  <p>The health monitor runs inside every API replica, but only one does the work: each cycle it tries to take (or renew) the Redis key
+    <code>netra:leader:health-monitor</code> with <code>SET NX EX 30</code>. The leader then evaluates all enabled cameras concurrently (at most 32 probes at
+    a time), saves results, and publishes <code>camera.status</code> for every camera whose status changed. A cycle runs every 10 seconds; roughly once an
+    hour it also runs data retention (chapter 19).</p>
+  <h3>11.2 Two health modes</h3>
+  <table>
+    <tr><th style="width:18%">Mode</th><th>How status is decided</th></tr>
+    <tr><td class="k">PROBE</td><td>The platform actively checks the source through its adapter (11.3). A successful probe updates <code>last_heartbeat_at</code>.</td></tr>
+    <tr><td class="k">HEARTBEAT</td><td>An edge device reports via <code>POST /cameras/{id}/heartbeat</code> (C006's edge agent every 10 s; the dashcam every 3 s with GPS).
+      No heartbeat yet → OFFLINE; age &gt; 90 s → OFFLINE "heartbeat lost"; age &gt; 30 s → DEGRADED "heartbeat late"; packet loss &gt; 5 % or fps &lt; 5 → DEGRADED;
+      otherwise ONLINE — <b>but</b> for a gateway camera the video is checked too, and if the gateway cannot pull it the camera is DEGRADED
+      "heartbeat OK, video unavailable". A heartbeat only revives an OFFLINE/UNKNOWN camera immediately; every other transition is decided by the monitor,
+      so the two paths never fight.</td></tr>
+  </table>
+  <h3>11.3 What each probe checks</h3>
+  <table>
+    <tr><th style="width:15%">Source</th><th>ONLINE</th><th>DEGRADED</th><th>OFFLINE</th></tr>
+    <tr><td class="k">RTSP / ONVIF</td><td>Gateway path ready and inbound bitrate ≥ 40 kbps (bytes received between two probes)</td><td>Ready but bitrate below 40 kbps</td>
+      <td>Path missing (re-registered automatically) or gateway cannot pull the source; ONVIF device unreachable or rejects credentials. Gateway itself unreachable → UNKNOWN</td></tr>
+    <tr><td class="k">HLS</td><td>Manifest 200 with <code>#EXTM3U</code></td><td>Manifest slower than the threshold</td><td>Unreachable, non-200 or not a manifest</td></tr>
+    <tr><td class="k">Vendor API</td><td><code>online: true</code></td><td>Weak signal or fps &lt; 5</td><td>Unreachable, credentials rejected, or <code>online: false</code></td></tr>
+  </table>
+  <h3>11.4 Hysteresis — no flapping</h3>
+  <p>A single failed probe of a healthy camera does not turn it red. In PROBE mode the first OFFLINE result of an ONLINE/DEGRADED camera is recorded as
+    DEGRADED "probe failed, retrying"; only the second consecutive failure makes it OFFLINE. Recovery is immediate. Every change is audited
+    (<code>CAMERA_STATUS_CHANGED</code> with from, to and reason), timestamped, exported as the Prometheus gauge <code>netra_cameras{status}</code>, and
+    pushed to every console, which shows a toast ("C002 went OFFLINE") and recolours the marker.</p>
+</div>
+
+<div class="chapter wide">
+  <h2><span class="num">12</span>Video: live, WebRTC, recording</h2>
+  <div class="figure">{{SVG:Figure 3}}<div class="caption">Figure 4 — How a browser is allowed to watch a camera</div></div>
+</div>
+
+<div class="chapter">
+  <h3 style="margin-top:0">12.1 The gateway</h3>
+  <p>MediaMTX pulls each registered RTSP source over TCP and serves it in three ways: <b>LL-HLS</b> (Low-Latency HLS: 1-second segments split into 200 ms parts,
+    seven segments kept, about 1–2 s glass-to-glass), <b>WebRTC</b> through the WHEP protocol (sub-second), and <b>recording</b> to fragmented MP4 (60-second
+    segments, deleted after 6 hours) served back as MP4 clips by its playback server. Its control API (port 9997) registers paths; its metrics are on 9998.</p>
+  <h3>12.2 Authorising every viewer</h3>
+  <p>The gateway is configured with <code>authMethod: http</code>: for every read, playback and API request it calls
+    <code>POST /api/v1/internal/media-auth</code> on the backend with the action, path, query string and any credentials. The backend allows:</p>
+  <ul>
+    <li><b>read / playback</b> only if a valid stream token (from the query string or bearer header) names the camera whose path is being requested
+      (<code>cam-</code> + lower-cased camera id);</li>
+    <li><b>api</b> only if the basic-auth credentials equal <code>netra-backend</code> and <code>GATEWAY_API_SECRET</code> (constant-time comparison);</li>
+    <li>nothing else. The proxy never routes <code>/api/v1/internal/*</code> from outside.</li>
+  </ul>
+  <h3>12.3 In the browser</h3>
+  <table>
+    <tr><th style="width:18%">Mode</th><th>How the console plays it</th></tr>
+    <tr><td class="k">LL-HLS</td><td><code>hls.js</code> in low-latency mode (live sync 2 parts, 10 s back-buffer). Its request hook re-opens each same-origin request with
+      <code>?token=…</code> appended, so the token reaches the playlist, parts and segments but is never sent to a third-party origin. On a fatal error it retries
+      every 5 s. Tokens are renewed every ~3.3 minutes without restarting playback.</td></tr>
+    <tr><td class="k">WebRTC</td><td>Creates an <code>RTCPeerConnection</code> with a receive-only video transceiver, gathers ICE candidates for up to 1.5 s, POSTs the SDP offer
+      to <code>/webrtc/cam-…/whep?token=…</code>, applies the answer. If it is not connected within 8 s it falls back to LL-HLS automatically. The session is
+      DELETEd when the player closes.</td></tr>
+    <tr><td class="k">Snapshots</td><td>An <code>&lt;img&gt;</code> refreshed every second from the snapshot proxy (10.4).</td></tr>
+    <tr><td class="k">Recorded clip</td><td><code>GET /cameras/{id}/clip?start&amp;duration</code> returns a playback URL such as
+      <code>/playback/get?path=cam-c001&amp;start=…&amp;duration=40&amp;format=mp4</code> plus a token; the browser plays the MP4 in a normal
+      <code>&lt;video&gt;</code> element. Each request is audited as <code>RECORDING_ACCESSED</code>.</td></tr>
+  </table>
+  <p>Opening a live view is audited as <code>STREAM_ACCESSED</code> once per user per camera per 10 minutes — enough to answer "who watched this camera
+    and when" without recording every token renewal.</p>
+</div>
+
+<div class="chapter wide">
+  <h2><span class="num">13</span>The ingestion pipeline</h2>
+  <div class="figure">{{SVG:Figure 4}}<div class="caption">Figure 5 — Ingestion stages and outcomes</div></div>
+</div>
+
+<div class="chapter">
+  <h3 style="margin-top:0">13.1 Stage by stage</h3>
+  <p>The same function, <code>ingestion.ingest()</code>, serves <code>POST /events</code>, every item of <code>POST /events/batch</code> and every message
+    from the Redis Stream.</p>
+  <ol class="steps">
+    <li><b>Schema validation</b> (before the pipeline): event type known; timestamp with a timezone; confidence 0–1; ANPR needs a plate of 4–12
+      alphanumerics after normalisation; face recognition needs a <code>person_ref</code>; GPS latitude and longitude together or not at all;
+      attributes under 4 KB; snapshot URL http(s) or relative. Errors return 422 with the failing field.</li>
+    <li><b>Semantic validation</b>: the camera must exist (404) and be enabled (409); the timestamp may be at most 5 minutes in the future (clock skew) and at
+      most 72 hours old (422).</li>
+    <li><b>Idempotency</b>: if the producer sent an <code>event_id</code> that is already stored, answer 200 <i>duplicate</i> with the original event id.
+      A producer can therefore retry safely after a timeout.</li>
+    <li><b>Temporal de-duplication</b>: for events with an identity, try <code>SET netra:dedup:{camera}:{type}:{identity} &lt;event_uid&gt; NX EX 60</code> in Redis.
+      If the key already exists, another read of the same vehicle at the same camera arrived within 60 s: the original event's <code>repeat_count</code> is
+      incremented, <code>last_seen_at</code> moves forward, the higher confidence is kept, and the answer is 200 <i>suppressed</i>. Because the key lives in
+      Redis this works across replicas.</li>
+    <li><b>Persist</b>: the event is inserted with the camera's location — or the GPS position the dashcam sent with it — so history stays correct even if a
+      camera is moved later. ANPR events get a <code>plate_format_valid</code> flag (Indian <code>GJ01AB1234</code> or BH-series pattern); a dashcam's speed is
+      stored in attributes.</li>
+    <li><b>Correlate</b>: if the event has an identity, maps to an entity type (vehicle for ANPR / vehicle detection, person for face / person detection) and
+      has confidence ≥ 0.60, the watchlist matcher runs (chapter 14) and alerts are raised or updated (chapter 15).</li>
+    <li><b>Commit, then publish</b>: only after the transaction commits are <code>detection.created</code>, <code>alert.created</code> and
+      <code>alert.updated</code> published — consoles never see data that does not exist. The answer is 201 <i>created</i> with the event id and alert ids.</li>
+  </ol>
+  <h3>13.2 Batch and stream inputs</h3>
+  <p><b>Batch</b> (≤ 500 events) exists for edge gateways that buffer during a network outage: each event is processed independently and the response lists
+    each result plus totals (created, duplicates, suppressed, rejected). Because of idempotency, replaying a buffer after reconnecting is safe.
+    <b>Stream</b>: producers <code>XADD netra:ingest:detections * payload &lt;json&gt; client &lt;name&gt;</code>; chapter 17 explains how the consumer group
+    processes it.</p>
+  <h3>13.3 Measured behaviour</h3>
+  <table>
+    <tr><th style="width:44%">Input</th><th>Result</th></tr>
+    <tr><td>10 reads of one passing vehicle within 3 s (<code>make burst</code>)</td><td>1 event, repeat_count = 9 (1 × 201, 9 × 200 suppressed)</td></tr>
+    <tr><td>The same <code>event_id</code> posted twice</td><td>One row; second answer 200 duplicate with the same id</td></tr>
+    <tr><td>Unknown camera / naive timestamp / confidence 1.7 / timestamp 1 h ahead</td><td>404 / 422 / 422 / 422</td></tr>
+    <tr><td>Watchlisted plate at confidence 0.3</td><td>Stored, no alert</td></tr>
+  </table>
+  <p>Metrics: <code>netra_events_total{event_type,result}</code>, <code>netra_alerts_total{severity,match_type}</code> and the latency histogram
+    <code>netra_ingest_seconds</code>.</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">14</span>Watchlist matching algorithms</h2>
+  <h3>14.1 Normalisation</h3>
+  <p>Both watchlist identifiers and detections are normalised the same way: upper-case, then every character that is not A–Z or 0–9 removed.
+    <code>gj 01 xx-0001</code>, <code>GJ01 XX 0001</code> and <code>GJ01XX0001</code> are the same plate.</p>
+  <h3>14.2 The in-memory index</h3>
+  <p>Matching runs on every detection, so it cannot query the database each time. The matcher keeps all <i>active</i> entries in memory:</p>
+  <ul>
+    <li>an <b>exact index</b>: a dictionary from (entity type, normalised identifier) to the entry — one lookup per detection;</li>
+    <li>a <b>deletion index</b> for vehicles (14.3).</li>
+  </ul>
+  <p>The index is rebuilt when the watchlist changes or after 5 minutes. Every add, edit or deactivation increments the Redis counter
+    <code>netra:watchlist:version</code>; each replica compares it with the version it loaded before matching, so no replica uses a stale list for more than
+    one event. Entries past <code>valid_until</code> never match.</p>
+  <h3>14.3 Fuzzy matching with a deletion index (SymSpell)</h3>
+  <p>ANPR makes predictable OCR mistakes: <code>0↔O</code>, <code>8↔B</code>, <code>5↔S</code>, <code>1↔I</code>, a dropped or extra character. Netra treats a read as a
+    <i>possible match</i> if it is within <b>edit distance 1</b> (one substitution, insertion or deletion) of a watchlisted plate of at least 6 characters.
+    Comparing each read with every entry would cost O(watchlist size). Instead, for every entry the index stores the plate itself and every string obtained by
+    deleting one character. For a read, the same deletions are generated; any entry that shares a key is a candidate, and candidates are confirmed with an
+    exact edit-distance-1 check. The cost is proportional to the plate length (about 10 lookups), not to the size of the watchlist.</p>
+<pre><span class="c">Watchlist entry  GJ05XX1234   deletions include  GJ05XX134  (deleted "2")</span>
+<span class="c">Camera read      GJ05XX1Z34   deletions include  GJ05XX134  (deleted "Z")</span>
+shared key "GJ05XX134"  →  candidate  →  one substitution (2→Z)  →  FUZZY match</pre>
+  <p>Fuzzy matches are labelled <i>possible match</i>, lowered one severity level (CRITICAL → HIGH, HIGH → MEDIUM…), and the alert view shows both the read
+    and the watchlisted plate so the operator can verify visually. Exact matches always win: if an exact match exists, fuzzy matching is not attempted.
+    Persons (face-recognition gallery references) are matched exactly only.</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">15</span>Alerts</h2>
+  <h3>15.1 Raise or update</h3>
+  <p>For every match the pipeline first looks for an <b>open</b> alert (NEW or ACKNOWLEDGED) for the same watchlist entry at the same camera whose last hit is
+    within the cool-down (300 s). If one exists it is updated — <code>hit_count + 1</code>, <code>last_hit_at</code>, best confidence — and
+    <code>alert.updated</code> is published. Otherwise a new alert is created with the entry's severity (lowered for fuzzy matches), the event's location, a
+    title such as "Stolen vehicle GJ01XX0001 at Paldi Cross Roads Junction", <code>ALERT_RAISED</code> is audited by the system actor
+    <code>correlation-engine</code>, and <code>alert.created</code> is published. A vehicle that keeps sitting in front of one camera therefore produces one
+    alert with a growing hit count; the same vehicle at a different camera produces a new alert, because that is new information.</p>
+  <h3>15.2 Workflow</h3>
+  <table>
+    <tr><th style="width:26%">Action</th><th>Rules</th></tr>
+    <tr><td class="k">Acknowledge</td><td>Only from NEW (409 otherwise); optional note; records who and when; audited <code>ALERT_ACKNOWLEDGED</code></td></tr>
+    <tr><td class="k">Resolve</td><td>From NEW or ACKNOWLEDGED; note of at least 3 characters required; <code>false_positive</code> flag chooses FALSE_POSITIVE; an
+      unacknowledged alert is acknowledged at the same moment; audited <code>ALERT_RESOLVED</code></td></tr>
+    <tr><td class="k">Bulk</td><td><code>POST /alerts/bulk</code> with a list of ids or "all open alerts older than N minutes"; up to 5,000; each alert audited individually</td></tr>
+  </table>
+  <h3>15.3 What the operator is told</h3>
+  <p>The toast (CRITICAL stays 20 s, others 10 s) and a synthesised alarm tone (three beeps for CRITICAL, two for HIGH, one otherwise; can be muted) link
+    straight to the alert and to the trace. The alert view assembles the watchlist record, the event, the camera, the trace and the recording, and adds two
+    automatic checks: a <b>colour mismatch</b> warning when the vehicle colour seen differs from the watchlist record (a possible false plate), and a
+    <b>non-standard plate format</b> warning from the ingestion flag.</p>
+  <h3>15.4 The response map</h3>
+  <p>The browser's Geolocation API supplies the operator's position (the site allows geolocation for itself only); if it is denied or unavailable the map
+    uses the Ahmedabad control room (Shahibaug) and says so. The wanted vehicle is placed at its <i>latest</i> sighting — which may be newer than the alert.
+    Distance is the great-circle distance; the drive time assumes 30 km/h city traffic. "Directions" opens Google Maps with both points; up to six sightings
+    from the previous two hours are drawn as numbered dots.</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">16</span>Search and movement tracing</h2>
+  <h3>16.1 Search</h3>
+  <p><code>GET /search?q=</code> returns three groups: detected entities whose normalised identifier contains the text (with number of detections, cameras and
+    last seen), watchlist entries containing it, and cameras whose id or name contains it. Input that normalises to nothing (for example <code>--</code>)
+    does not match the whole watchlist. The top bar's search box jumps straight to a trace.</p>
+  <h3>16.2 Trace</h3>
+  <p><code>GET /trace/{identifier}</code> loads the 2,000 most recent sightings of the normalised identifier (optionally within a time range), sorts them
+    oldest first and computes, for each stop: minutes since the previous sighting, the great-circle (haversine) distance, and the implied speed.</p>
+<pre>d = 2 · 6371 km · asin( √( sin²(Δφ/2) + cos φ₁ · cos φ₂ · sin²(Δλ/2) ) )      speed = d / Δt</pre>
+  <p>If two consecutive sightings are more than 1 km apart and either share a timestamp or imply a speed above <b>160 km/h</b>, the trace adds the
+    anomaly "Impossible travel A→B: x km in y min — possible cloned/duplicate plate". The response also includes the first and last sighting, totals and,
+    if the identity is on the watchlist, its record and number of alerts. The console draws the stops as a numbered dashed route on the map.</p>
+</div>
+
+<div class="chapter wide">
+  <h2><span class="num">17</span>Real-time delivery</h2>
+  <div class="figure">{{SVG:Figure 5}}<div class="caption">Figure 6 — Real-time fan-out and the message-channel ingest path</div></div>
+</div>
+
+<div class="chapter">
+  <h3 style="margin-top:0">17.1 WebSocket protocol</h3>
+  <p>The console opens <code>wss://&lt;host&gt;/api/v1/ws?token=&lt;access token&gt;</code>. The server verifies the token (and that it is not revoked) and that the user is
+    active — otherwise it closes with code 4401 — then sends <code>{"type":"hello"}</code>. The client sends <code>ping</code> every 25 s and receives
+    <code>{"type":"pong"}</code>; a socket silent for 90 s is closed. Every message has the shape <code>{"type", "ts", "data"}</code>:</p>
+  <table>
+    <tr><th style="width:26%">type</th><th style="width:22%">data</th><th>Console reaction</th></tr>
+    <tr><td class="mono">detection.created</td><td>event</td><td>Added to the live detections feed; KPIs, history and charts refreshed</td></tr>
+    <tr><td class="mono">alert.created</td><td>alert</td><td>Toast, sound, alert queues, camera markers, trace and watchlist refreshed</td></tr>
+    <tr><td class="mono">alert.updated</td><td>alert / {bulk}</td><td>Queues and markers refreshed</td></tr>
+    <tr><td class="mono">camera.status</td><td>camera</td><td>Toast for OFFLINE / DEGRADED / back ONLINE; map and health refreshed</td></tr>
+    <tr><td class="mono">camera.location</td><td>id, lat, lng, speed, heading, at</td><td>Dashcam marker moved and trail extended in place (no re-fetch)</td></tr>
+    <tr><td class="mono">camera.created / updated / bulk_created</td><td>camera / {ids}</td><td>Registry and map refreshed</td></tr>
+    <tr><td class="mono">watchlist.changed</td><td>{id, action}</td><td>Watchlist refreshed</td></tr>
+  </table>
+  <p>On the server, <code>event_bus.publish()</code> sends every message to the Redis channel <code>netra:realtime</code>; every replica subscribes and delivers
+    to its own sockets, dropping any socket that does not accept a message within 2 s. If Redis publishing fails the replica still delivers locally. On the
+    client, cache invalidations are batched (one flush per 1.2 s), and after a reconnect (exponential back-off up to 15 s) everything is re-fetched once
+    to catch up.</p>
+  <h3>17.2 The Redis Stream consumer</h3>
+  <p>Each replica joins the consumer group <code>netra-ingest</code> on the stream <code>netra:ingest:detections</code> (consumer name = host name) and reads
+    up to 100 messages at a time, blocking for at most 1 s. For each message it parses and validates the payload and runs the same ingestion pipeline; it then
+    acknowledges the message (<code>XACK</code>). Invalid messages are copied to the dead-letter stream <code>netra:ingest:dlq</code> (capped at 10,000) with the
+    error, then acknowledged. Messages that fail for any other reason (for example the database is briefly down) are <b>not</b> acknowledged; every 30 s the
+    consumer claims messages that have been pending for more than 60 s (<code>XAUTOCLAIM</code>) — including those of a replica that crashed — and retries them.
+    This gives at-least-once delivery; idempotency makes it effectively exactly-once.</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">18</span>Statistics, metrics and audit</h2>
+  <h3>18.1 Dashboard statistics</h3>
+  <p><code>GET /stats/overview</code> computes, in one call: cameras by status (enabled only) plus disabled and total; open alerts by severity, NEW alerts and
+    alerts in 24 h; events in the last 5 minutes, hour and 24 hours, events per minute, and repeat reads suppressed in 24 h; active watchlist size and the
+    matcher's cached size; WebSocket clients on this replica; and the platform's own service health (API, database, Redis, ingest backlog from the consumer
+    group's pending + lag, gateway reachability, ready streams and viewers — cached for 5 s). <code>GET /stats/timeseries?hours=24</code> returns hourly
+    detections, watchlist hits and alerts.</p>
+  <h3>18.2 Health and metrics endpoints</h3>
+  <table>
+    <tr><th style="width:26%">Endpoint</th><th>Purpose</th></tr>
+    <tr><td class="mono">/api/health</td><td>Liveness: the process answers (used by Docker's health check)</td></tr>
+    <tr><td class="mono">/api/ready</td><td>Readiness: database and Redis reachable (503 otherwise)</td></tr>
+    <tr><td class="mono">/api/metrics</td><td>Prometheus metrics; internal only (blocked at the proxy)</td></tr>
+  </table>
+  <h3>18.3 The audit log</h3>
+  <p>Twenty-one actions are recorded, each with the actor (user, API client or system), the entity, readable details and the client IP:</p>
+  <table>
+    <tr><th style="width:22%">Area</th><th>Actions</th></tr>
+    <tr><td class="k">Sessions</td><td>LOGIN_SUCCESS, LOGIN_FAILED (with consecutive failures), LOGIN_LOCKED, LOGOUT, PASSWORD_RESET</td></tr>
+    <tr><td class="k">Users &amp; keys</td><td>USER_CREATED, API_CLIENT_CREATED, API_CLIENT_REVOKED</td></tr>
+    <tr><td class="k">Cameras</td><td>CAMERA_ONBOARDED, CAMERA_UPDATED (field-level diff, secrets masked), CAMERA_ENABLED, CAMERA_DISABLED, CAMERA_STATUS_CHANGED</td></tr>
+    <tr><td class="k">Video</td><td>STREAM_ACCESSED, RECORDING_ACCESSED</td></tr>
+    <tr><td class="k">Alerts</td><td>ALERT_RAISED, ALERT_ACKNOWLEDGED, ALERT_RESOLVED</td></tr>
+    <tr><td class="k">Watchlist</td><td>WATCHLIST_ADDED, WATCHLIST_UPDATED, WATCHLIST_DEACTIVATED</td></tr>
+  </table>
+  <p>No endpoint updates or deletes audit records, and retention never prunes them.</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">19</span>Data retention</h2>
+  <p class="lead">A platform that runs for months must not fill its disk. Retention is automatic.</p>
+  <table>
+    <tr><th style="width:26%">Data</th><th style="width:22%">Kept for</th><th>Mechanism</th></tr>
+    <tr><td class="k">Detection events</td><td>30 days</td><td>Hourly job deletes older events in batches of 5,000 — <b>except</b> events referenced by an alert, which are evidence</td></tr>
+    <tr><td class="k">Dashcam GPS points</td><td>48 hours</td><td>Same hourly job</td></tr>
+    <tr><td class="k">Recordings</td><td>6 hours</td><td>Gateway <code>recordDeleteAfter</code></td></tr>
+    <tr><td class="k">Alerts, watchlist, users, audit</td><td>Indefinitely</td><td>Never pruned</td></tr>
+    <tr><td class="k">Redis</td><td>By TTL</td><td>Dedup keys 60 s, rate windows 1 min, lockouts 15 min, revocations until token expiry; streams length-capped</td></tr>
+    <tr><td class="k">Container logs</td><td>30 MB / container</td><td>Docker rotation 3 × 10 MB</td></tr>
+    <tr><td class="k">MySQL binary logs</td><td>None</td><td>Disabled (single server; backups instead)</td></tr>
+    <tr><td class="k">Backups (server)</td><td>7 days</td><td>Nightly <code>mysqldump --single-transaction</code>, gzipped</td></tr>
+  </table>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">20</span>API reference</h2>
+  <p class="lead">Base path <code>/api/v1</code>; JSON; OpenAPI at <code>/api/docs</code>. Lists return <code>{items, total, limit, offset}</code>; errors
+    <code>{"detail": …}</code>. "any" = any signed-in user.</p>
+  <table class="api">
+    <tr><th style="width:10%">Method</th><th style="width:42%">Path</th><th style="width:17%">Access</th><th style="width:31%">Purpose</th></tr>
+    <tr><td>POST</td><td class="mono">/auth/login · /auth/token</td><td>public</td><td>Sign in (JSON / OAuth2 form for Swagger)</td></tr>
+    <tr><td>POST</td><td class="mono">/auth/logout</td><td>any</td><td>Revoke the current token</td></tr>
+    <tr><td>GET</td><td class="mono">/auth/me · /departments</td><td>any</td><td>Current user · departments</td></tr>
+    <tr><td>GET · POST</td><td class="mono">/users</td><td>admin</td><td>List · create users</td></tr>
+    <tr><td>GET · POST</td><td class="mono">/api-clients</td><td>admin</td><td>List · issue API keys</td></tr>
+    <tr><td>POST</td><td class="mono">/api-clients/{id}/revoke</td><td>admin</td><td>Revoke a key</td></tr>
+    <tr><td>GET</td><td class="mono">/cameras?q&amp;status&amp;department_id&amp;zone&amp;protocol&amp;camera_type&amp;enabled</td><td>any</td><td>Search / filter the registry</td></tr>
+    <tr><td>POST</td><td class="mono">/cameras · /cameras/bulk</td><td>admin · cameras:write</td><td>Onboard one · up to 500</td></tr>
+    <tr><td>GET · PATCH</td><td class="mono">/cameras/{id}</td><td>any · admin</td><td>Read · edit / enable / disable</td></tr>
+    <tr><td>GET</td><td class="mono">/cameras/zones · /cameras/{id}/audit</td><td>any</td><td>Zones · camera audit history</td></tr>
+    <tr><td>POST</td><td class="mono">/cameras/{id}/heartbeat</td><td>cameras:heartbeat</td><td>Edge heartbeat with metrics and optional GPS</td></tr>
+    <tr><td>GET</td><td class="mono">/cameras/{id}/track?minutes</td><td>any</td><td>Dashcam GPS track</td></tr>
+    <tr><td>POST</td><td class="mono">/cameras/{id}/probe</td><td>operator</td><td>Probe now</td></tr>
+    <tr><td>GET</td><td class="mono">/cameras/{id}/playback</td><td>any</td><td>Live-view descriptor + stream token</td></tr>
+    <tr><td>GET</td><td class="mono">/cameras/{id}/snapshot?token</td><td>stream token</td><td>Vendor snapshot proxy</td></tr>
+    <tr><td>GET</td><td class="mono">/cameras/{id}/recordings · /clip?start&amp;duration</td><td>any</td><td>Recorded segments · MP4 clip descriptor</td></tr>
+    <tr><td>POST</td><td class="mono">/onvif/discover</td><td>admin</td><td>ONVIF discovery (credentials in body)</td></tr>
+    <tr><td>POST</td><td class="mono">/events · /events/batch</td><td>events:write · admin</td><td>Ingest one · up to 500</td></tr>
+    <tr><td>GET</td><td class="mono">/events?camera_id&amp;event_type&amp;identifier&amp;since&amp;until&amp;watchlist_hit&amp;min_confidence</td><td>any</td><td>Detection history</td></tr>
+    <tr><td>GET</td><td class="mono">/events/{id} · /events/export.csv</td><td>any · operator</td><td>One event · CSV (≤ 50,000 rows)</td></tr>
+    <tr><td>GET</td><td class="mono">/search?q · /trace/{identifier}</td><td>any</td><td>Search · movement history</td></tr>
+    <tr><td>GET · POST</td><td class="mono">/watchlist</td><td>any · operator</td><td>List · add</td></tr>
+    <tr><td>PATCH · DELETE</td><td class="mono">/watchlist/{id}</td><td>operator</td><td>Edit · deactivate</td></tr>
+    <tr><td>GET</td><td class="mono">/alerts?status&amp;severity&amp;camera_id&amp;identifier&amp;since · /alerts/{id}</td><td>any</td><td>Alert queue · detail</td></tr>
+    <tr><td>POST</td><td class="mono">/alerts/{id}/acknowledge · /resolve · /alerts/bulk</td><td>operator</td><td>Alert workflow</td></tr>
+    <tr><td>GET</td><td class="mono">/stats/overview · /stats/timeseries</td><td>any</td><td>Dashboard statistics</td></tr>
+    <tr><td>GET</td><td class="mono">/audit</td><td>admin</td><td>Audit log</td></tr>
+    <tr><td>WS</td><td class="mono">/ws?token</td><td>any</td><td>Real-time channel</td></tr>
+    <tr><td>GET</td><td class="mono">/api/health · /api/ready</td><td>public</td><td>Liveness · readiness</td></tr>
+  </table>
+  <h3>Worked example: one detection end to end</h3>
+<pre>POST /api/v1/events
+X-API-Key: ntr_…
+{ "event_id": "edge-42-000187", "camera_id": "C001", "event_type": "ANPR",
+  "timestamp": "2026-10-02T10:02:11+05:30", "vehicle_number": "GJ 01 XX 0001",
+  "confidence": 0.94, "vehicle_type": "car", "vehicle_color": "white",
+  "bounding_box": {"x": 412, "y": 388, "w": 176, "h": 44} }
+
+201 Created
+{ "status": "created", "event_id": 91988, "event_uid": "edge-42-000187", "alert_ids": [919] }
+
+<span class="c">WebSocket → every console:</span>
+{ "type": "alert.created", "ts": "…", "data": { "id": 919, "identifier": "GJ01XX0001",
+  "severity": "CRITICAL", "match_type": "EXACT", "camera_id": "C001", "title": "Stolen vehicle GJ01XX0001 at Paldi Cross Roads Junction", … } }</pre>
+</div>
+
+<!-- ======================================================================= PART IV -->
+<div class="part">
+  <div class="pnum">PART IV</div>
+  <h1>Frontend in depth</h1>
+  <p>How the React console is built: data flow, real-time updates, the video and map components, and every page.</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">21</span>Frontend architecture</h2>
+  <table>
+    <tr><th style="width:24%">Concern</th><th>Choice and how it is used</th></tr>
+    <tr><td class="k">Framework</td><td>React 19 with TypeScript in strict mode, built by Vite; routing with React Router 7</td></tr>
+    <tr><td class="k">Server state</td><td>TanStack Query: every screen reads through cached queries (keys such as <code>["cameras", filters]</code>,
+      <code>["alerts", …]</code>, <code>["overview"]</code>); data is considered fresh for 10 s; mutations invalidate the affected keys</td></tr>
+    <tr><td class="k">API client</td><td><code>api()</code> wraps <code>fetch</code>: prefixes <code>/api/v1</code>, adds the bearer token, serialises JSON, turns FastAPI
+      validation errors into readable messages, and calls the sign-out handler on a 401</td></tr>
+    <tr><td class="k">Session</td><td><code>AuthProvider</code>: token in <code>sessionStorage</code>, current user, <code>login</code>, <code>logout</code> (revokes server-side),
+      <code>can(...roles)</code> used to show or hide actions</td></tr>
+    <tr><td class="k">Real-time</td><td><code>RealtimeProvider</code> owns one WebSocket per tab (chapter 17), keeps the last 80 detections, plays alert tones, shows toasts,
+      updates the dashcam position directly in the query cache, and batches invalidations</td></tr>
+    <tr><td class="k">Styling</td><td>Tailwind CSS 4 with a design-token theme (ink greys, cyan accent, status and severity colours); component classes
+      (panel, input, btn, plate, data table) in <code>index.css</code></td></tr>
+    <tr><td class="k">Libraries</td><td>Leaflet + react-leaflet (maps), hls.js (video), Recharts (trend chart), sonner (toasts), lucide (icons), date-fns; fonts
+      bundled locally (Inter, JetBrains Mono)</td></tr>
+    <tr><td class="k">Resilience</td><td>An error boundary around the whole app shows "Something went wrong" with Try again / Reload instead of a blank page;
+      routes are protected (unauthenticated → login; non-admin → dashboard for admin pages)</td></tr>
+  </table>
+  <h3>Data flow in one sentence</h3>
+  <p>A screen reads data through a query; the server pushes a WebSocket message when something changes; the real-time provider invalidates (or directly patches)
+    the matching queries; the screen re-renders with fresh data — no polling loops and no page refreshes.</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">22</span>Key components</h2>
+  <table>
+    <tr><th style="width:22%">Component</th><th>What it does</th></tr>
+    <tr><td class="k">Layout</td><td>Sidebar navigation (admin-only items hidden for others; NEW-alert badge), top bar with entity search, live-connection indicator
+      ("LIVE · n msg/min" or "RECONNECTING"), sound mute, IST clock and the routed page</td></tr>
+    <tr><td class="k">VideoPlayer</td><td>Asks <code>/playback</code> for a descriptor and renders HlsView, WhepView (with automatic HLS fallback) or SnapshotView; overlays
+      camera id, name, status, open-alert count, transport and dashcam speed; refreshes the stream token every 200 s</td></tr>
+    <tr><td class="k">ClipPlayer</td><td>Asks <code>/clip</code> for a recorded window and plays the MP4 with controls</td></tr>
+    <tr><td class="k">CameraMap</td><td>Leaflet map that fits all cameras (or a trace route): status dots, pulsing ring for open alerts, heading arrow for dashcams, purple
+      GPS trails, numbered route stops with times</td></tr>
+    <tr><td class="k">OsmTiles</td><td>OpenStreetMap base layer darkened with a CSS filter; tiles alone send the site origin as referrer (OSM's usage policy)</td></tr>
+    <tr><td class="k">ResponseMap</td><td>Operator position (with accuracy circle) and the wanted vehicle's latest sighting, a dashed line between them, earlier sightings</td></tr>
+    <tr><td class="k">AlertDetail</td><td>The full incident view (section 15.3–15.4), plus acknowledge / resolve with note</td></tr>
+    <tr><td class="k">AlertToast</td><td>Severity-coloured toast with plate, category, camera, time, confidence, case reference, "Open alert" and "Trace movement"</td></tr>
+    <tr><td class="k">CameraForm</td><td>Create / edit camera with protocol-specific hints; password field never pre-filled ("leave blank to keep")</td></tr>
+    <tr><td class="k">DetailsView</td><td>Turns audit and metric JSON into readable chips ("DEGRADED → ONLINE", "Packet Loss %: 0.7")</td></tr>
+    <tr><td class="k">Badges</td><td>Status, severity, alert-status and protocol badges; number-plate styling; confidence bar</td></tr>
+    <tr><td class="k">useMyLocation</td><td>Browser geolocation with permission handling and the control-room fallback</td></tr>
+  </table>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">23</span>Pages</h2>
+  <table>
+    <tr><th style="width:16%">Page</th><th style="width:16%">Route</th><th>Behaviour</th></tr>
+    <tr><td class="k">Login</td><td class="mono">/login</td><td>Section 2.1; redirects to the dashboard once signed in</td></tr>
+    <tr><td class="k">Dashboard</td><td class="mono">/</td><td>Section 2.2; camera filter applies to map, grid and health table; dashcam trails loaded per dashcam</td></tr>
+    <tr><td class="k">Live wall</td><td class="mono">/wall</td><td>All enabled cameras; 2/3/4 columns; WebRTC toggle remounts players in low-latency mode</td></tr>
+    <tr><td class="k">Cameras</td><td class="mono">/cameras</td><td>Paged registry with five filters and a map; <code>?focus=ID</code> opens the camera detail modal (live view, WebRTC toggle, recorded
+      replay, dashcam telemetry and track, health, actions, audit); "Add camera" and "ONVIF discovery" for admins</td></tr>
+    <tr><td class="k">Alerts</td><td class="mono">/alerts</td><td>Five tabs, severity filter, paging, multi-select bulk actions; <code>?focus=ID</code> opens AlertDetail; new alerts flash red</td></tr>
+    <tr><td class="k">Detections</td><td class="mono">/events</td><td>Filters including a date-time range; CSV export (operators); clicking a row opens its trace</td></tr>
+    <tr><td class="k">Trace</td><td class="mono">/trace/:id</td><td>Exact trace with map; "Partial-match search" lists entities, watchlist entries and cameras containing the text</td></tr>
+    <tr><td class="k">Watchlist</td><td class="mono">/watchlist</td><td>Search, category and active filters; add entry (vehicle or person); deactivate; jump to trace</td></tr>
+    <tr><td class="k">Audit log</td><td class="mono">/audit</td><td>Admins only; filter by entity type and action; refreshes every 15 s</td></tr>
+    <tr><td class="k">API clients</td><td class="mono">/api-clients</td><td>Admins only; issue a key with scopes (shown once with a copy button); revoke</td></tr>
+  </table>
+</div>
+
+<!-- ======================================================================= PART V -->
+<div class="part">
+  <div class="pnum">PART V</div>
+  <h1>Simulators and infrastructure</h1>
+  <p>The simulated city that exercises the platform with real protocols, and the infrastructure configuration that runs it.</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">24</span>The simulated world</h2>
+  <p class="lead">The brief allows simulated sources. They are built to speak the <i>real</i> protocols, so the platform code is the code that would talk to real
+    cameras and models.</p>
+  <h3>24.1 Cameras and devices</h3>
+  <table>
+    <tr><th style="width:22%">Simulator</th><th>What it is</th></tr>
+    <tr><td class="k">camsim (RTSP cameras)</td><td>A MediaMTX instance that requires credentials to read, fed by FFmpeg. Each stream (<code>c001</code>, <code>c002</code>,
+      <code>c003</code>, <code>c006</code>, <code>d001</code>) is a generated CCTV-style scene — road, lane markings, moving vehicles, sensor noise — with an on-screen
+      display of the camera id, location and live IST clock; the dashcam stream is a forward-facing road view. H.264 baseline, 960×540, 700 kbps. Dropping
+      <code>&lt;stream&gt;.mp4</code> into <code>samples/</code> replaces a scene with real footage.</td></tr>
+    <tr><td class="k">ONVIF device</td><td>SOAP 1.2 endpoint that verifies WS-Security digests exactly like a real camera and answers GetDeviceInformation, GetProfiles and
+      GetStreamUri (pointing to <code>rtsp://camsim:8554/c003</code>)</td></tr>
+    <tr><td class="k">Vendor NVR API</td><td>REST channels 1 and 2 with <code>/status</code> and <code>/snapshot.jpg</code> (rendered with Pillow: perspective road, moving
+      vehicles, OSD, blurred when the signal is weak) behind an API key; <code>/simulate?state=online|weak|offline</code> drives health demos</td></tr>
+    <tr><td class="k">Public HLS</td><td>A public test stream stands in for an existing municipal VMS (C004)</td></tr>
+  </table>
+  <h3>24.2 Traffic</h3>
+  <table>
+    <tr><th style="width:22%">Producer</th><th>Behaviour</th></tr>
+    <tr><td class="k">AI analytics engine</td><td>About 20 vehicles per minute (10 in production) over C001, C002, C003, C005, C006. Each vehicle is read 1–4 times within a couple of
+      seconds (exercising dedup). 0.8 % are watchlisted plates, 30 % of those with an injected OCR error (exercising fuzzy matching). 4 % of cycles add a
+      face-recognition event (10 % of them watchlisted persons); 5 % add a person or object detection with matching labels. Delivery is "mixed": half over REST
+      with retries and stable event ids, half over the Redis Stream.</td></tr>
+    <tr><td class="k">Edge agent</td><td>Heartbeats for C006 every 10 s with fps, bitrate, packet loss, uptime, temperature and firmware; can be paused</td></tr>
+    <tr><td class="k">Dashcam (D001)</td><td>Drives a 12-junction patrol loop through Ahmedabad West, ticking every 3 s at 4× real time, speed varying 0–72 km/h. Each tick: a GPS
+      heartbeat; a 45 % chance of an ANPR read of surrounding traffic at its current position (0.4 % watchlisted); ADAS rules — overspeed above 60 km/h in a
+      50 zone, harsh braking (3 %, a 25–35 km/h drop), collision warning (1.5 %), drowsiness (0.8 %)</td></tr>
+  </table>
+  <h3>24.3 Seed data</h3>
+  <p>Four departments; three users; the <code>analytics-simulator</code> API client with all three scopes; cameras C001–C006 and D001 across Ahmedabad and
+    Gandhinagar; 15 synthetic watchlist entries (12 vehicles using the reserved "XX" series, 3 persons with <code>FR-SYN</code> references); and a day of
+    history (420 detections and four handled alerts) so a fresh install has meaningful charts. The seed is idempotent and never overwrites existing data.</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">25</span>Video gateway, proxy and Compose</h2>
+  <h3>25.1 Gateway configuration (infra/gateway/mediamtx.yml)</h3>
+  <p>API on 9997, metrics on 9998, RTSP 8554, LL-HLS 8888 (always remux, 7 × 1 s segments, 200 ms parts), WebRTC 8889 with media on 8189 UDP/TCP
+    (advertising <code>PUBLIC_IP</code> in production), playback server 9996, recording defaults (fMP4, 1 s parts, 60 s segments, 6 h), and the HTTP auth hook
+    to the backend with only <code>metrics</code> excluded.</p>
+  <h3>25.2 Edge proxy (infra/caddy/Caddyfile)</h3>
+  <table>
+    <tr><th style="width:24%">Route</th><th>Handling</th></tr>
+    <tr><td class="mono">/api/*</td><td>Internal paths and metrics answer 404; bodies ≤ 2 MB; proxied to the backend (WebSockets included)</td></tr>
+    <tr><td class="mono">/media/*</td><td>Prefix stripped, proxied to gateway LL-HLS; redirects rewritten back under <code>/media</code></td></tr>
+    <tr><td class="mono">/webrtc/*</td><td>Bodies ≤ 64 KB; proxied to gateway WebRTC; redirects rewritten</td></tr>
+    <tr><td class="mono">/playback/*</td><td>Proxied to the gateway playback server</td></tr>
+    <tr><td class="mono">everything else</td><td>The React build with SPA fallback and the strict Content-Security-Policy</td></tr>
+  </table>
+  <p>Headers on every response: HSTS (one year in production, zero on localhost), <code>nosniff</code>, <code>X-Frame-Options: DENY</code>,
+    <code>Referrer-Policy: no-referrer</code>, <code>Cross-Origin-Opener-Policy</code>, a restrictive <code>Permissions-Policy</code>, and no <code>Server</code>
+    header. TLS: Caddy's internal CA on localhost, automatic Let's Encrypt for a real domain.</p>
+  <h3>25.3 Compose files and scripts</h3>
+  <p><code>docker-compose.yml</code> defines the stack (chapter 6). <code>docker-compose.prod.yml</code> overrides it for a public server: production mode, ports
+    80/443 and 8189, no backend port, one-year HSTS, public WebRTC address, gentler simulated traffic, higher login rate limit (all users arrive through a
+    few proxy IPs on Vercel). Scripts: <code>gen-env.sh</code> (secrets), <code>camera.sh</code> (outage simulation), <code>deploy-vm.sh</code> (one-command server
+    install), <code>backup.sh</code> (nightly dump), <code>configure-vercel.sh</code> (point the Vercel console at a backend).</p>
+</div>
+
+<!-- ======================================================================= PART VI -->
+<div class="part">
+  <div class="pnum">PART VI</div>
+  <h1>Quality, security, operations</h1>
+  <p>How the platform is secured, tested, deployed, scaled and kept running — and what is left to do.</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">26</span>Security model</h2>
+  <p class="lead">Defence in depth: each layer assumes the one in front of it may fail.</p>
+  <table>
+    <tr><th style="width:26%">Threat</th><th>Defence</th></tr>
+    <tr><td class="k">Password guessing</td><td>Per-IP rate limit, per-account lockout (5 failures → 15 min), bcrypt cost 12, constant-time path for unknown users</td></tr>
+    <tr><td class="k">Stolen session token</td><td>8-hour expiry; server-side revocation on logout and password change; token kept in sessionStorage; strict CSP against script injection</td></tr>
+    <tr><td class="k">Privilege escalation</td><td>Role check on every route; wrong token type rejected; API keys limited to explicit scopes</td></tr>
+    <tr><td class="k">Camera credential leak</td><td>Fernet encryption at rest; never serialised; inline URL credentials refused; credentials injected only by the gateway</td></tr>
+    <tr><td class="k">Unauthorised video access</td><td>Every HLS / WebRTC / recording request verified by the backend against a 5-minute, single-camera token</td></tr>
+    <tr><td class="k">Reconfiguring streams</td><td>Gateway control API requires the backend's secret</td></tr>
+    <tr><td class="k">SSRF via camera endpoints</td><td>Platform hosts, loopback, link-local (incl. cloud metadata), multicast and reserved addresses refused when saved and after DNS
+      resolution before every request, including each redirect hop; snapshot proxy relays images only</td></tr>
+    <tr><td class="k">Malicious XML</td><td><code>defusedxml</code> for all ONVIF responses</td></tr>
+    <tr><td class="k">Oversized / malformed input</td><td>Length limits on every field; request-body limits at the proxy; strict schemas; generic 500 responses</td></tr>
+    <tr><td class="k">Clickjacking, sniffing, referrer leaks</td><td>Frame denial, nosniff, no-referrer (map tiles send origin only), COOP</td></tr>
+    <tr><td class="k">Exposed services</td><td>Localhost-only binding by default; data tier unpublished; internal paths blocked; three segmented networks</td></tr>
+    <tr><td class="k">Container breakout impact</td><td>Non-root users, all capabilities dropped, no-new-privileges, memory limits</td></tr>
+    <tr><td class="k">Secrets in Git</td><td><code>.env</code> ignored and generated randomly; staged files scanned against real secrets before commits</td></tr>
+    <tr><td class="k">Vulnerable dependencies</td><td>Pinned versions; <code>pip-audit</code> and <code>npm audit</code> report 0 known vulnerabilities</td></tr>
+    <tr><td class="k">Repudiation</td><td>Append-only audit log of every important action with actor and IP</td></tr>
+  </table>
+  <p>Accepted risks: lockout can be abused to lock an account for 15 minutes (production would use SSO with MFA); map tiles reveal the viewed area to
+    OpenStreetMap (self-host tiles for air-gapped use); environment variables are visible to host administrators (use a secrets manager in production).</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">27</span>Testing and CI</h2>
+  <p class="lead">38 automated tests run against an in-memory configuration (SQLite, no Redis, gateway disabled) in about 10 seconds.</p>
+  <table>
+    <tr><th style="width:24%">File</th><th>What it proves</th></tr>
+    <tr><td class="mono">test_auth_cameras.py</td><td>Bad passwords rejected; authentication required; onboarding hides credentials and is audited; inline credentials and wrong schemes
+      refused; API-key bulk onboarding with per-item errors; viewers cannot modify; disabling is audited; playback tokens are camera-scoped and the media-auth
+      hook enforces it</td></tr>
+    <tr><td class="mono">test_ingestion.py</td><td>Validation errors (unknown camera, confidence, naive and future timestamps); idempotent retries; repeat reads folded; watchlist match raises an
+      alert with cool-down; fuzzy match lowers severity; low confidence does not alert; acknowledge / resolve workflow and role checks; trace order and
+      impossible travel; batch and statistics; bulk resolve</td></tr>
+    <tr><td class="mono">test_dashcam.py</td><td>GPS heartbeats move the camera and build a track; events and alerts are geolocated where the van was; ADAS events stored; half a GPS fix
+      rejected; clips refused for non-recordable cameras</td></tr>
+    <tr><td class="mono">test_security.py</td><td>Account lockout; server-side logout; forged and wrong-type tokens; seven SSRF payloads; private camera networks still allowed; API-key
+      scope validation; over-long passwords; security headers</td></tr>
+    <tr><td class="mono">test_retention.py</td><td>Old events pruned, alert evidence kept</td></tr>
+    <tr><td class="mono">test_matcher.py</td><td>Edit-distance-1 logic: substitution, insertion, deletion, trailing insertion, non-matches</td></tr>
+  </table>
+  <p><b>CI</b> (GitHub Actions, on every push): backend lint (Ruff), format check and tests; simulator lint and compile; frontend ESLint and production build
+    (TypeScript strict); and a build of every Docker image. <b>Beyond unit tests</b>, every change during development was verified against the running stack with
+    a headless browser (pages, real-time updates, video playback, WebRTC, recordings, maps) and live API checks (token scoping, blocked routes).</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">28</span>Deployment</h2>
+  <table>
+    <tr><th style="width:24%">Option</th><th>How</th></tr>
+    <tr><td class="k">Local</td><td><code>make up</code> → <code>https://localhost:8443</code>. Trust Caddy's local root certificate once to avoid the browser warning.</td></tr>
+    <tr><td class="k">Public link from this machine</td><td>Cloudflare quick tunnel (free, no account):
+      <code>cloudflared tunnel --url https://localhost:8443 --no-tls-verify --http-host-header localhost --origin-server-name localhost</code>;
+      available while the machine is on; the address changes on restart.</td></tr>
+    <tr><td class="k">Always-on server</td><td>Any Ubuntu VM (x86 or ARM; e.g. a free-tier cloud VM): <code>scripts/deploy-vm.sh &lt;repo&gt; &lt;email&gt;</code> installs Docker,
+      swap, firewall rules, automatic updates, sets <code>SITE_ADDRESS=&lt;ip&gt;.sslip.io</code> for a free real certificate, starts the production stack and
+      schedules backups. Re-running it updates the server.</td></tr>
+    <tr><td class="k">Vercel (console only)</td><td><code>scripts/configure-vercel.sh &lt;backend-host&gt;</code> generates <code>frontend/vercel.json</code> (HTTP rewrites, security headers)
+      and <code>.env.vercel</code> (direct WebSocket URL, because Vercel cannot proxy WebSockets); import the repository with root directory <code>frontend</code>.</td></tr>
+  </table>
+  <p>Operationally the stack restarts itself, is memory- and disk-bounded, renews certificates, and has health endpoints suitable for a free uptime monitor
+    (<code>/api/ready</code>). See <code>docs/DEPLOYMENT.md</code> for step-by-step instructions.</p>
+</div>
+
+<div class="chapter wide">
+  <h2><span class="num">29</span>Scaling to 80,000 cameras</h2>
+  <div class="figure">{{SVG:Figure 8}}<div class="caption">Figure 7 — Edge, regional and central tiers</div></div>
+</div>
+
+<div class="chapter">
+  <h3 style="margin-top:0">29.1 The reasoning</h3>
+  <p>80,000 cameras × 2 Mbps would be about 160 Gbps if all video went to one place. The design keeps video at the edge (recorded locally, viewed on demand
+    through regional gateways) and moves only metadata: at an assumed 4,000 ANPR events per second (peak 12,000), the central uplink is about 20 Mbps and
+    the database takes about 345 million rows a day. Every seam needed for this already exists in the prototype:</p>
+  <table>
+    <tr><th style="width:32%">Prototype mechanism</th><th>At scale</th></tr>
+    <tr><td>Source adapters</td><td>Edge boxes and vendor SDKs plug in as adapters</td></tr>
+    <tr><td>Batch API + idempotency</td><td>Edge store-and-forward during WAN outages, safe replay</td></tr>
+    <tr><td>Redis Streams consumer group</td><td>Kafka partitioned by camera, many consumers</td></tr>
+    <tr><td>Stateless API + Redis fan-out</td><td>N replicas behind a load balancer, autoscaled</td></tr>
+    <tr><td>Leader-elected health monitor</td><td>Sharded by camera id per region</td></tr>
+    <tr><td>On-demand gateway pulls, snapshots</td><td>Bandwidth only where someone is watching; 2G/4G sites</td></tr>
+    <tr><td>Indexed MySQL, retention</td><td>Monthly partitions, read replicas, ClickHouse/OpenSearch for long-range search</td></tr>
+  </table>
+  <p>GPU sizing, storage tiers, high availability, disaster recovery, security architecture and an indicative state-wide cost (≈ ₹40 Cr one-time + ₹18–22
+    Cr per year, about ₹2,500 per camera per year) are detailed in <code>docs/SCALABILITY.md</code> and the architecture PDF.</p>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">30</span>Troubleshooting</h2>
+  <p class="lead">Problems actually met during development, and their fixes.</p>
+  <table>
+    <tr><th style="width:30%">Symptom</th><th style="width:30%">Cause</th><th>Fix</th></tr>
+    <tr><td>Browser: "Your connection is not private" with no Proceed button</td><td>Local certificate not trusted; an earlier one-year HSTS policy pinned localhost</td>
+      <td>Trust "Caddy Local Authority" in the keychain; clear localhost at <code>chrome://net-internals/#hsts</code>; localhost now sends HSTS max-age=0</td></tr>
+    <tr><td>Map shows "Access blocked / 403"</td><td>OpenStreetMap requires a Referer; the site sends none</td><td>Fixed: tiles use <code>referrerPolicy=strict-origin</code></td></tr>
+    <tr><td><code>docker compose build</code> hangs on macOS</td><td>Docker Desktop's credential helper waits on a Keychain prompt</td>
+      <td>Approve the prompt, or build with a config that has no <code>credsStore</code></td></tr>
+    <tr><td>Builds and tools extremely slow</td><td>Project folder on an iCloud-synced Desktop</td><td>Move the repository out of Desktop/Documents</td></tr>
+    <tr><td>Page goes black when an alert arrives</td><td>(Fixed) toast links rendered outside the router</td><td>Toaster inside the router + app-wide error boundary</td></tr>
+    <tr><td>Many open alerts</td><td>Simulated traffic with nobody acknowledging</td><td>Alerts → select all → Resolve with a note (bulk, audited)</td></tr>
+    <tr><td>C004 OFFLINE</td><td>Public test stream needs internet</td><td>Check connectivity or set <code>PUBLIC_HLS_URL</code></td></tr>
+    <tr><td>WebRTC stays on "LL-HLS (WebRTC unavailable)"</td><td>UDP/TCP 8189 not reachable</td><td>Open the port; the player has already fallen back to LL-HLS</td></tr>
+    <tr><td>Port 8443 in use</td><td>Another local service</td><td>Set <code>HTTPS_PORT</code> in <code>.env</code></td></tr>
+    <tr><td>"Account locked for 15 minutes"</td><td>Five wrong passwords</td><td>Wait, or reset with <code>python -m app.manage set-password</code></td></tr>
+  </table>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">31</span>Limitations and roadmap</h2>
+  <h3>Limitations of the prototype</h3>
+  <ul>
+    <li>AI inference and camera feeds are simulated (the brief does not require model training); the interfaces are the real ones.</li>
+    <li>ONVIF discovery probes configured hosts instead of multicast WS-Discovery.</li>
+    <li>Recordings are a 6-hour hot tier; warm and cold tiers are designed, not built.</li>
+    <li>Departments are modelled but data access is not yet restricted per department.</li>
+    <li>The dashcam drives straight lines between junctions (no road snapping).</li>
+  </ul>
+  <h3>Roadmap</h3>
+  <table>
+    <tr><th style="width:5%">#</th><th style="width:50%">Next step</th><th>Value</th></tr>
+    <tr><td>1</td><td>Real edge inference (YOLO + OCR on NVIDIA DeepStream)</td><td>Live ANPR from real footage into the same API</td></tr>
+    <tr><td>2</td><td>Evidence clips to object storage with legal hold</td><td>Chain of custody beyond 6 hours</td></tr>
+    <tr><td>3</td><td>SSO (OIDC) with MFA; department-scoped access</td><td>Multi-agency tenancy, stronger identity</td></tr>
+    <tr><td>4</td><td>Kafka + ClickHouse; partitioned MySQL</td><td>State-scale throughput and long-range search</td></tr>
+    <tr><td>5</td><td>PTZ control over ONVIF; appearance-based re-identification</td><td>Operator control; tracking beyond plates</td></tr>
+    <tr><td>6</td><td>Playwright end-to-end tests; always-on hosting</td><td>Regression safety; permanent demo</td></tr>
+  </table>
+</div>
+
+<div class="chapter">
+  <h2><span class="num">32</span>Glossary</h2>
+  <table>
+    <tr><th style="width:22%">Term</th><th>Meaning</th></tr>
+    <tr><td class="k">ANPR</td><td>Automatic Number-Plate Recognition: a camera plus model that reads vehicle registration plates</td></tr>
+    <tr><td class="k">RTSP</td><td>Real-Time Streaming Protocol: how IP cameras deliver video; browsers cannot play it directly</td></tr>
+    <tr><td class="k">ONVIF</td><td>Industry standard for discovering and controlling IP cameras over SOAP web services</td></tr>
+    <tr><td class="k">HLS / LL-HLS</td><td>HTTP Live Streaming: video as small files over HTTPS; Low-Latency HLS splits segments into parts for ~1–2 s delay</td></tr>
+    <tr><td class="k">WebRTC / WHEP</td><td>Real-time browser media (sub-second); WHEP is the simple HTTP handshake for receiving a WebRTC stream</td></tr>
+    <tr><td class="k">MediaMTX</td><td>Open-source media server used as the video gateway (and for the simulated cameras)</td></tr>
+    <tr><td class="k">NVR / VMS</td><td>Network Video Recorder / Video Management System — existing systems that hold cameras</td></tr>
+    <tr><td class="k">ADAS</td><td>Advanced Driver-Assistance Systems events from a dashcam (overspeed, harsh braking, collision warning, drowsiness)</td></tr>
+    <tr><td class="k">JWT</td><td>JSON Web Token: a signed token carrying the user's identity and role</td></tr>
+    <tr><td class="k">RBAC</td><td>Role-Based Access Control (admin, operator, viewer)</td></tr>
+    <tr><td class="k">Idempotency</td><td>Sending the same request twice has the same effect as once</td></tr>
+    <tr><td class="k">Dedup window</td><td>Period (60 s) during which repeat reads of the same identity at the same camera are folded into one event</td></tr>
+    <tr><td class="k">Cool-down</td><td>Period (5 min) during which a new match for an open alert updates it instead of raising another</td></tr>
+    <tr><td class="k">Edit distance / SymSpell</td><td>Number of single-character edits between two strings / a fast method to find all strings within a small edit distance using deletions</td></tr>
+    <tr><td class="k">Haversine</td><td>Formula for the distance between two points on a sphere from their latitudes and longitudes</td></tr>
+    <tr><td class="k">Hysteresis</td><td>Requiring a condition to persist (two failed probes) before changing state, to avoid flapping</td></tr>
+    <tr><td class="k">Leader election</td><td>Making sure only one replica runs a background job, using a short-lived Redis lock</td></tr>
+    <tr><td class="k">Pub/Sub</td><td>Publish/subscribe messaging: every subscriber receives every published message</td></tr>
+    <tr><td class="k">Redis Stream / consumer group / DLQ</td><td>Durable message log; a group of consumers sharing its messages with acknowledgements; dead-letter queue for messages that cannot be processed</td></tr>
+    <tr><td class="k">SSRF</td><td>Server-Side Request Forgery: tricking a server into connecting to internal resources</td></tr>
+    <tr><td class="k">CSP / HSTS</td><td>Content-Security-Policy: which sources a page may load / HTTP Strict Transport Security: forces HTTPS</td></tr>
+    <tr><td class="k">Fernet</td><td>Authenticated symmetric encryption (AES-128-CBC + HMAC-SHA256) used for camera credentials</td></tr>
+    <tr><td class="k">bcrypt</td><td>Deliberately slow password-hashing function</td></tr>
+    <tr><td class="k">Alembic</td><td>Database migration tool for SQLAlchemy</td></tr>
+    <tr><td class="k">sslip.io</td><td>Free DNS service where <code>1-2-3-4.sslip.io</code> resolves to 1.2.3.4, enabling a real HTTPS certificate for an IP address</td></tr>
+  </table>
+  <p class="small" style="margin-top:6mm">End of handbook. Companion documents in the repository: <code>docs/Netra-Architecture.pdf</code>, <code>README.md</code>,
+    <code>docs/API.md</code>, <code>docs/SECURITY.md</code>, <code>docs/SCALABILITY.md</code>, <code>docs/DEPLOYMENT.md</code>, <code>docs/DEMO_SCRIPT.md</code>.</p>
+</div>
+
+</body>
+</html>
